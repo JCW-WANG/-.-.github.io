@@ -100,6 +100,7 @@ section {
     display: flex;
     justify-content: center;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .filter-btn {
@@ -109,6 +110,11 @@ section {
     border-radius: 20px;
     cursor: pointer;
     color: var(--primary-color);
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    background: #e0e7ff;
 }
 
 .filter-btn.active {
@@ -147,6 +153,7 @@ section {
     margin-bottom: 10px;
     font-size: 1rem;
     resize: vertical;
+    min-height: 80px;
 }
 
 .reveal-btn {
@@ -169,7 +176,7 @@ section {
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px dashed #e5e7eb;
-    display: none; /* Hidden by default */
+    display: none;
 }
 
 .term-answer.show {
@@ -186,6 +193,7 @@ section {
     font-size: 0.8rem;
     font-weight: 600;
     margin-bottom: 5px;
+    margin-right: 5px;
 }
 
 /* Quiz Cards */
@@ -195,6 +203,7 @@ section {
     box-shadow: var(--shadow);
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+    position: relative;
 }
 
 .question-text {
@@ -227,15 +236,15 @@ section {
 
 /* Feedback Styles */
 .option-btn.correct {
-    background-color: #d1fae5;
-    border-color: var(--success-color);
-    color: #065f46;
+    background-color: #d1fae5 !important;
+    border-color: var(--success-color) !important;
+    color: #065f46 !important;
 }
 
 .option-btn.wrong {
-    background-color: #fee2e2;
-    border-color: var(--error-color);
-    color: #991b1b;
+    background-color: #fee2e2 !important;
+    border-color: var(--error-color) !important;
+    color: #991b1b !important;
 }
 
 .feedback-box {
