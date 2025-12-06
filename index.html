@@ -2,463 +2,58 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>管理學期末考全真模擬</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f0f4f8; }
-        .fade-enter { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .btn-touch { transition: transform 0.1s; }
-        .btn-touch:active { transform: scale(0.97); }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>期末考衝刺：管理學與行銷</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="text-slate-800 h-[100dvh] flex flex-col overflow-hidden">
+<body>
 
-    <header class="bg-white/90 backdrop-blur-md shadow-sm z-20 flex-none border-b border-slate-200">
-        <div class="max-w-2xl mx-auto px-4 h-14 flex justify-between items-center">
-            <h1 class="text-lg font-bold text-blue-700 tracking-tight flex items-center gap-2">
-                <span class="text-xl">🎓</span> Final Term Prep
-            </h1>
-            <button onclick="App.goHome()" class="text-sm font-medium text-slate-500 hover:text-blue-600 px-3 py-1 rounded-full hover:bg-blue-50 transition">
-                回首頁
-            </button>
+    <header>
+        <div class="container">
+            <h1><i class="fas fa-graduation-cap"></i> 期末考衝刺系統</h1>
+            <p>Management & Marketing Final Review</p>
         </div>
     </header>
 
-    <div id="progress-container" class="hidden h-1 bg-slate-200 flex-none w-full">
-        <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300 ease-out" style="width: 0%"></div>
-    </div>
-
-    <main id="app" class="flex-grow overflow-y-auto overflow-x-hidden p-4 relative w-full max-w-2xl mx-auto">
-        </main>
-
-    <footer id="status-bar" class="hidden bg-white border-t border-slate-200 p-3 flex-none safe-area-bottom">
-        <div class="max-w-2xl mx-auto flex justify-between items-center text-sm font-semibold">
-            <div class="flex items-center gap-2 text-slate-500">
-                <span>題目</span>
-                <span id="q-current" class="text-slate-900">1</span>
-                <span>/</span>
-                <span id="q-total">10</span>
-            </div>
-            <div class="flex items-center gap-2 text-blue-600">
-                <span>得分</span>
-                <span id="score-val" class="text-lg">0</span>
-            </div>
+    <nav class="sticky-nav">
+        <div class="container">
+            <button class="nav-btn active" onclick="switchTab('terms')">Key Terms (關鍵詞)</button>
+            <button class="nav-btn" onclick="switchTab('quiz')">Mock Exam (模擬題)</button>
         </div>
+    </nav>
+
+    <main class="container">
+        
+        <section id="terms-section" class="active-section">
+            <div class="intro-card">
+                <h2><i class="fas fa-book"></i> 關鍵詞記憶卡</h2>
+                <p>試著在心中解釋該名詞，或在下方輸入筆記，然後點擊「顯示詳解」來核對。</p>
+            </div>
+            <div id="terms-container">
+                </div>
+        </section>
+
+        <section id="quiz-section" class="hidden-section">
+            <div class="intro-card">
+                <h2><i class="fas fa-pen-alt"></i> 實戰演練</h2>
+                <p>包含是非題 (True/False) 與選擇題 (Multiple Choice)。點擊選項立即獲得解析。</p>
+                <div class="filter-controls">
+                    <button class="filter-btn active" onclick="filterQuiz('all')">全部</button>
+                    <button class="filter-btn" onclick="filterQuiz('tf')">是非題</button>
+                    <button class="filter-btn" onclick="filterQuiz('mc')">選擇題</button>
+                </div>
+            </div>
+            <div id="quiz-container">
+                </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>祝期末考順利 All Pass! | Designed by AI Assistant</p>
     </footer>
 
-    <script>
-        // ==========================================
-        // 完整題庫資料庫 (Data)
-        // ==========================================
-        const DB = {
-            terms: [
-                { t: "participative (Democratic) leadership", c: "參與式(民主)領導", def: "領導者讓員工參與決策、大量授權、鼓勵共同參與決定工作目標與方法，並透過有效的回饋來發展員工能力。領導者像是教練、引導者。", ex: "領導者開會時，先聽取大家意見，再找出大家都同意的決策。" },
-                { t: "leadership", c: "領導", def: "一個引導團隊、影響團隊以達成目標的過程。", ex: "「風雨過後的指揮官」: 先強調任務分工、行動紀律，同時也親自清理，關懷士兵與居民，最後達成任務目標。" },
-                { t: "intrinsic motivation", c: "內在動機", def: "個人因為本身的興趣、成就感等而願意去做某件事，即使沒有外在獎勵也願意。", ex: "在畫畫前告知畫完會有獎勵，結果未畫完，即使之後不給獎勵了，還是會繼續畫完的人。" },
-                { t: "extrinsic motivation", c: "外在動機", def: "個人因為想獲得外部獎賞或避免懲罰而進行某行為，不是發自內心想去做，而是因為有「誘因」或「壓力」才做。", ex: "在畫畫前告知畫完會有獎勵，結果為畫完，但在之後不給獎勵後，就不畫了。" },
-                { t: "training and development", c: "訓練與發展", def: "訓練著重目前工作上所需之知識與技能(短期)；發展著重於員工個人成長(長期/未來導向)。", ex: "訓練: 系統/機器操作；發展: 帶團隊(領導課程)。" },
-                { t: "Cafeteria benefit plans", c: "自助餐式福利計劃", def: "企業提供一套基本福利，由員工依照自己的需求狀況，在一定額度內點選它們所需的額外福利。", ex: "員工可以在額度內選擇進修補助、健身房補助、保險或子女教育津貼等。" },
-                { t: "marketing mix", c: "行銷組合", def: "包含 Product(產品) + Price(價格) + Place(通路) + Promotion(推廣)。", ex: "星巴克：賣氛圍(Product)、價格親民但高於超商(Price)、百貨/外送(Place)、買一送一(Promotion)。" },
-                { t: "segmentation", c: "市場區隔", def: "針對所選定之目標市場，依照適合的區隔變數(人口/地理/心理/行為)來進行區隔。將異質市場變為同質小市場。", ex: "Netflix使用行為區隔來根據觀眾的觀看習慣推薦內容。" },
-                { t: "positioning", c: "產品定位", def: "針對選定的市場，透過清楚定義品牌要傳遞的價值，並和競爭對手區隔（差異化），在顧客心中佔有獨特位置。", ex: "廉價航空以價格差異建立競爭優勢。" },
-                { t: "marketing", c: "行銷", def: "一套包含某些活動和機構的程序，藉此來創造、溝通與傳達產品與價值。重點在於「生產我們所能賣的產品」，先確定顧客需要，才去生產。", ex: "防疫表單，保險公司根據疫情趨勢與顧客焦慮，設計專屬方案。" },
-                { t: "the product life cycle", c: "產品生命週期", def: "產品從導入期進入市場,到衰退期退出市場的整個過程。(導入期/成長期/成熟期/衰退期)", ex: "導入: Vision Pro; 成長: 摺疊手機; 成熟: iPhone; 衰退: iPod。" }
-            ],
-            tf: [
-                { q: "The four key management functions are planning, organizing, leading, and controlling.", c: "四項主要的管理職能為規劃、組織、領導與控制。", a: true },
-                { q: "One trend of the leading management function is to empower employees, giving them as much freedom as possible to become self-directed.", c: "領導職能的一項趨勢是授權員工，讓他們擁有盡可能多的自由，以便自我引導。", a: true },
-                { q: "A person who is a good first-line manager is automatically likely to be a good middle or top manager.", c: "一個擅長基層管理的人，自然也有可能成為優秀的中階或高階主管。", a: false, note: "不同層級的管理需要不同的技能組合（如技術技能 vs 概念技能）。" },
-                { q: "Human relations skills include those associated with leadership, coaching, morale building, and supportiveness.", c: "人際關係技巧包含與領導、指導、士氣建立及支持性有關的能力。", a: true },
-                { q: "One difference between managers and leaders is that managers strive to achieve stability while leaders embrace change.", c: "經理人與領導者的差異之一是：經理人追求穩定，而領導者擁抱變革。", a: true },
-                { q: "The traits used by autocratic leaders include warmth, friendliness, and collaboration.", c: "專制型領導者的特質包含溫暖、友善與合作。", a: false, note: "這是民主/參與式領導的特質。專制型通常較為權威、命令式。" },
-                { q: "Autocratic leadership is most effective with workers who like to work independently and make their own decisions.", c: "專制式領導最適合喜歡獨立工作並自行決策的員工。", a: false, note: "這類員工適合放任式(Free-rein)領導。" },
-                { q: "Managers are most effective when they consistently use the same leadership style with every employee assigned to their work group.", c: "當經理人對所有員工都一貫使用相同的領導風格時，會達到最佳管理效果。", a: false, note: "應採用權變理論(Contingency)，視情境與員工特性調整風格。" },
-                { q: "Daylon is quick and decisive. He makes most decisions by himself, issues orders... Daylon's behavior is an example of the free-rein style of leadership.", c: "Daylon 反應迅速且果斷... 這種行為屬於自由放任式領導風格的例子。", a: false, note: "這是專制式(Autocratic)領導的典型特徵。" },
-                { q: "If managers do a good job planning and organizing, there shouldn't be a need for them to be involved with controlling.", c: "若經理人能妥善進行規劃與組織，就不需要再參與控制工作。", a: false, note: "控制(Controlling)是確保目標達成的必要職能，無論規劃多好都需要。" },
-                { q: "Since motivation comes from within an individual, there is little that managers can do to help motivate employees.", c: "由於動機源自個人內在，管理者能協助員工提升動機的空間非常有限。", a: false, note: "管理者可透過外在獎勵、工作設計、文化建立來激發動機。" },
-                { q: "The Hawthorne studies established that productivity at work seldom changed, but an employee's attitude could show significant improvement if they were given the opportunity to think critically at work.", c: "霍桑研究指出...若給予批判思考機會...。", a: false, note: "霍桑效應強調的是「被關注」與「社會心理因素」對生產力的影響，而非單純的批判性思考。" },
-                { q: "According to Maslow, people will try to satisfy lower-order needs before they turn their attention to higher-order needs.", c: "依據馬斯洛理論，人們會先滿足低層次需求，之後才會追求高層次需求。", a: true },
-                { q: "According to equity theory, if things seem unfair, employees will do their best to make them equitable by withholding effort...", c: "根據公平理論，若感覺情況不公，他們會試圖透過減少努力...來恢復公平。", a: true },
-                { q: "When using open communication to motivate employees, it is best to keep your communication vague and ambiguous.", c: "在運用開放式溝通激勵員工時，最好保持訊息模糊不清。", a: false, note: "溝通應清晰明確(Clear and concise)。" },
-                { q: "As a motivational technique, letting employees know they've done a good job is less powerful than providing them with a bonus.", c: "讓員工知道自己表現良好比發放獎金的效果更弱。", a: false, note: "認可與讚賞往往是非常強大的激勵因素，有時甚至超越金錢。" },
-                { q: "Feeling underappreciated is a common reason people leave their jobs.", c: "覺得不被重視是人們離職的常見原因之一。", a: true },
-                { q: "Gavan wants to encourage open communication. One of the most important things he can do is to become a good listener.", c: "Gavan 希望促進開放式溝通...他能做的最重要事情之一就是成為一位善於傾聽的人。", a: true },
-                { q: "Regardless of cultural background, most employees respond the same way to motivational approaches.", c: "不論文化背景為何，大多數員工對激勵方式的反應都相同。", a: false, note: "文化差異會顯著影響對激勵因子的反應。" },
-                { q: "It is important when dealing with today's culturally diverse workforce that managers maintain a consistent motivational approach for everyone.", c: "在面對當今文化多元的勞動力時，管理者應對所有人採取一致的激勵方式。", a: false, note: "應採取差異化、客製化的激勵方式。" },
-                { q: "HR is focused on issues directly related to a person's job... but are not directly related to work (like elder care).", c: "人力資源工作聚焦在與職務...直接相關的議題，而不像長照或托育...", a: false, note: "現代 HR 也關注員工福利與工作生活平衡(Work-life balance)。" },
-                { q: "Like all management, human resource management begins with planning.", c: "和其他管理領域一樣，人力資源管理由規劃開始。", a: true },
-                { q: "Human resource planning involves assessment of both the future supply of the various types of labor needed...", c: "人力資源規劃需要同時評估組織未來對各類勞動力的需求以及供給。", a: true },
-                { q: "When recruiting, human resource managers must attract people who fit the culture and work well under the company's leadership style.", c: "在招募時，人資需吸引具備合適技能且能與企業文化契合的人才。", a: true },
-                { q: "Selection is the process of gathering information and deciding for the best interests of the individual and the organization.", c: "甄選是在法規框架下蒐集資訊並決定錄用人選，使結果符合個人與組織的最大利益。", a: true },
-                { q: "Employee training focuses on short-term skills, while employee development focuses on long-term abilities.", c: "員工訓練著重短期技能，員工發展著重長期能力。", a: true },
-                { q: "While efforts to train and develop women and minority managers... from an economic standpoint, they are rarely advantageous.", c: "雖然培訓與發展女性與少數族裔...但從經濟角度看「很少有利可圖」。", a: false, note: "多元化通常能帶來更廣的市場觀點與創新，具經濟優勢。" },
-                { q: "A performance appraisal is an evaluation in which the performance level of employees is measured against established standards...", c: "績效評估是依既定標準衡量員工表現，並作為升遷、薪酬...依據。", a: true },
-                { q: "Most experienced workers have a clear idea of what is expected if managers do not communicate their expectations explicitly.", c: "多數資深員工即使未被明確告知，也能清楚知道被期待的表現。", a: false, note: "期望必須明確溝通，不能依賴猜測。" },
-                { q: "Performance appraisals are very useful for new... but have little value for top management.", c: "績效評估僅對新人...有用、對高階管理幾乎無價值。", a: false, note: "績效評估對所有層級都很重要。" },
-                { q: "Many firms are now contracting with outside companies to administer their employee benefits plans.", c: "許多公司現正外包員工福利計畫的管理。", a: true },
-                { q: "Employees sometimes prefer fringe benefits... because most often these benefits are not taxable income.", c: "員工有時偏好附帶福利...因為這些福利多半不需課稅。", a: true },
-                { q: "The marketing concept has three parts: consumer orientation, service orientation, an advertising orientation.", c: "行銷理念包含三個部分：消費者導向、服務導向、廣告導向。", a: false, note: "錯。第三個通常是「利潤導向(Profit Orientation)」而非廣告導向。" },
-                { q: "Ogden Automotive... provides estimates, guarantees, calls customers... This applies Customer Relationship Management (CRM).", c: "Ogden 汽車...這些做法顯示正在運用顧客關係管理的概念。", a: true },
-                { q: "The primary factors involved in the marketing mix are sometimes called the five intangibles of marketing.", c: "行銷組合中所涉及的主要因素有時被稱為行銷的五個無形要素。", a: false, note: "錯。是 4Ps (Product, Price, Place, Promotion)，包含有形與無形。" },
-                { q: "The marketing process includes decisions about the best way to get the product to the consumer.", c: "行銷過程包含關於如何以最佳方式將產品交付給消費者的決策(Place/Distribution)。", a: true },
-                { q: "The last step in the marketing process often includes building a continuing relationship with customers.", c: "行銷過程的最後一步通常包括與顧客建立持續的關係。", a: true },
-                { q: "The first step in the marketing research process is to collect relevant data.", c: "行銷研究過程的第一步是收集相關資料。", a: false, note: "第一步通常是「定義問題(Defining the problem)」或設定研究目標。" },
-                { q: "Both the online survey and the interviews are sources of primary data for Tech Universe Consulting.", c: "這些線上調查與訪談都是...主要資料(Primary Data)來源。", a: true },
-                { q: "The buyer's reason for buying is the determining factor as to whether a good is classified as a consumer product or a B2B product.", c: "購買者的購買理由(用途)是判定商品屬於消費性或B2B產品的關鍵因素。", a: true },
-                { q: "Market segmentation allows a company to group together consumers with similar characteristics.", c: "市場區隔讓公司能將具有相似特徵的消費者歸為同一群體。", a: true },
-                { q: "Kiara spends time visiting professors... keeping existing customers satisfied. This is consistent with mass marketing.", c: "Kiara 強調維持現有客戶的滿意度，這種做法符合大眾行銷(Mass Marketing)的理念。", a: false, note: "這更接近關係行銷(Relationship Marketing)或個人銷售，而非大眾行銷。" },
-                { q: "From a strategic marketing viewpoint, a total product offer includes everything consumers evaluate when deciding whether to buy.", c: "從策略行銷觀點，「整體產品提供」包含消費者評估的所有要素。", a: true },
-                { q: "The various product lines that a company offers for sale make up that organization's product mix.", c: "一家企業所銷售的不同產品線，構成該組織的產品組合(Mix)。", a: true },
-                { q: "Marketers use pricing, advertising, and packaging to differentiate their products... even when actual differences are small.", c: "即使實際差異極小，行銷人員仍會透過定價、廣告與包裝來區隔產品。", a: true },
-                { q: "Unsought goods and services are purchased on impulse and provide no added value to consumers.", c: "非搜尋性商品通常因衝動購買且不提供附加價值。", a: false, note: "非搜尋性商品(如保險、葬儀)通常是因為「需要」而非衝動，且有其價值。" },
-                { q: "Amir visits variety of retailers to compare... This indicates a recliner is a shopping good.", c: "Amir 比較多家...顯示躺椅屬於「選購性商品(Shopping Good)」。", a: true },
-                { q: "A trademark is a brand that has been given exclusive legal protection for both the brand name and its design.", c: "商標是對品牌名稱及設計獲得專屬法律保護的品牌。", a: true },
-                { q: "Brand names can help sellers with new-product introductions and create an opportunity for higher prices.", c: "品牌名稱能協助推出新產品並創造高價機會。", a: true },
-                { q: "Concept testing involves taking a product idea to marketing managers to test their reactions.", c: "概念測試是將構想帶給行銷經理測試反應。", a: false, note: "概念測試的對象應是「潛在消費者(Potential Customers)」。" },
-                { q: "The four stages in the product life cycle are introduction, market, exchange, and decline.", c: "產品生命週期的四個階段是導入、市場、交換與衰退。", a: false, note: "應為：導入(Introduction)、成長(Growth)、成熟(Maturity)、衰退(Decline)。" },
-                { q: "In order to compute break-even... she must know price, fixed costs, and variable cost.", c: "為了計算損益平衡...必須知道售價、固定成本及變動成本。", a: true },
-                { q: "Radio advertising costs more than TV advertising but it typically reaches more people.", c: "廣播廣告成本高於電視廣告，但觸及更多人。", a: false, note: "電視通常比廣播貴且觸及視覺與聽覺。" },
-                { q: "When marketers advertise on Google... they can reach the people they most want to reach.", c: "在 Google 投放廣告能觸及最想要接觸的目標族群(精準行銷)。", a: true },
-                { q: "Businesses pay for product placement to have their products displayed as part of a TV episode or movie.", c: "企業支付置入性行銷費用，讓產品成為節目一部分。", a: true },
-                { q: "The first step in the selling process involves prospecting for potential customers.", c: "銷售流程第一步包含尋找潛在顧客(Prospecting)。", a: true },
-                { q: "Personal selling is one of the least costly ways a firm can promote its products.", c: "個人銷售是成本最低的方式之一。", a: false, note: "個人銷售通常是成本「最高」的方式(以每次接觸成本計算)。" },
-                { q: "Effective use of public relations includes an evaluation of public attitudes and the execution of a program to earn acceptance.", c: "有效公關包括評估公眾態度並執行計畫獲取認同。", a: true },
-                { q: "Marketing is often referred to as the talking arm of public relations.", c: "行銷常被稱為公共關係的「發聲手臂」。", a: false, note: "通常公關(PR)被視為推廣(Promotion)的一部分，或者倒過來說 PR 是行銷的輔助，此敘述不準確。" },
-                { q: "Trade shows as promotional techniques are used primarily for B2B customers.", c: "商展主要針對 B2B 客戶。", a: true },
-                { q: "Social media offers opportunities for positive and negative word-of-mouth promotion.", c: "社群媒體提供正面與負面口碑推廣的機會。", a: true },
-                { q: "The objective of a push promotional strategy is to move a product... by offering incentives to wholesalers and retailers.", c: "推式策略(Push Strategy)目標是透過給予批發/零售商誘因來推動產品。", a: true }
-            ],
-            mc: [
-                { q: "Management today places more emphasis on:", c: "當代管理更強調：", opts: ["individual work", "working in teams", "eliminating control", "reliance on government"], a: 1, note: "現代管理強調團隊合作(Teamwork)。" },
-                { q: "Which characteristic is most useful for a modern manager?", c: "現代管理者最有用的特質？", opts: ["disciplinarian", "supervisor", "organizer", "technical skills"], a: 2, note: "管理者角色已轉向教練、引導者與組織者(Organizer)。" },
-                { q: "Leadership, coaching, and morale building are all part of a manager's _____ skills.", c: "領導、指導與士氣培養屬於哪類技能？", opts: ["technical", "theoretical", "empirical", "human relations"], a: 3, note: "人際關係技能(Human relations)。" },
-                { q: "__________ involves creating a vision for others to follow...", c: "涉及建立願景讓他人追隨...", opts: ["Organizing", "Production management", "Tactical planning", "Leadership"], a: 3, note: "領導(Leadership)的核心在於願景與影響力。" },
-                { q: "Managers who listen to their subordinates and allow them to participate in decision making are using the __________ style.", c: "傾聽部屬並讓其參與決策是哪種風格？", opts: ["autocratic", "free-rein", "participative", "bureaucratic"], a: 2, note: "參與式(Participative)。" },
-                { q: "A key to effective leadership is the ability to:", c: "有效領導的關鍵能力：", opts: ["maintain order", "communicate a vision and rally others", "master technical details", "maintain autocratic approach"], a: 1, note: "溝通願景並凝聚人心(Communicate a vision)。" },
-                { q: "One difference between managers and leaders is that:", c: "管理者與領導者的差異：", opts: ["managers in business/leaders in nonprofit", "managers strive for stability/leaders embrace change", "managers autocratic/leaders democratic", "all employees manage"], a: 1, note: "管理者重秩序穩定，領導者重變革(Change)。" },
-                { q: "Which statement about effective leadership is the most accurate?", c: "關於有效領導最準確的敘述？", opts: ["Same personality traits", "Depends on who is being led and situation", "Democratic always best", "Maintain same style"], a: 1, note: "權變觀點：視情境與對象而定(Depends on situation)。" },
-                { q: "Autocratic leadership is likely to be effective when:", c: "專制式領導何時有效？", opts: ["subordinates highly trained", "organization faces emergency", "workers like expressing opinions", "manager uncertain"], a: 1, note: "緊急狀況(Emergency)時需要快速決策。" },
-                { q: "Which statement about leadership styles is most accurate?", c: "關於領導風格最準確的敘述？", opts: ["Choose one style consistently", "No control over style", "Effective managers use a variety of styles", "Start autocratic then switch"], a: 2, note: "有效管理者會運用多種風格(Variety)。" },
-                { q: "The personal satisfaction people feel when they have done a job well is a(n) __________ reward.", c: "把工作做好時的個人滿足感是？", opts: ["cognitive", "extrinsic", "physiological", "intrinsic"], a: 3, note: "內在(Intrinsic)獎酬。" },
-                { q: "Rewards in recognition of good work that come from someone else are __________ rewards.", c: "來自他人的獎酬是？", opts: ["conditional", "intrinsic", "extrinsic", "secondary"], a: 2, note: "外在(Extrinsic)獎酬。" },
-                { q: "In Maslow's hierarchy, __________ needs refer to the desire to reach one's fullest potential.", c: "馬斯洛：渴望達到最大潛能？", opts: ["social", "esteem", "egoistic", "self-actualization"], a: 3, note: "自我實現(Self-actualization)。" },
-                { q: "Equity theory states that employees will perform well if they:", c: "公平理論：員工表現好是因為？", opts: ["understand responsibilities", "impress others", "believe reward fairly compensates efforts compared to others", "goals reasonable"], a: 2, note: "比較後的公平感(Fair compensation compared to others)。" },
-                { q: "According to equity theory, which statement is most accurate?", c: "公平理論最準確敘述？", opts: ["Give everyone same reward", "Perceptions of fairness affect motivation", "Employees estimate accurately", "US employees focus on self"], a: 1, note: "公平的「感知(Perception)」會影響動機。" },
-                { q: "Direct and clear information employees receive about their performance is called:", c: "關於表現的直接明確資訊稱為？", opts: ["linkage", "feedback", "autonomy", "enlargement"], a: 1, note: "回饋(Feedback)。" },
-                { q: "Organizations can establish open communication by:", c: "如何建立開放式溝通？", opts: ["military chain of command", "private offices", "seminars on listening to management", "creating culture that rewards listening"], a: 3, note: "創造獎勵傾聽的文化。" },
-                { q: "Characteristic of a high-context culture?", c: "高語境文化特徵？", opts: ["Task immediately", "Task after ease in", "Relationship waste of time", "Relationship/trust very important before task"], a: 3, note: "關係與信任先於任務(Relationship building first)。" },
-                { q: "Characteristic of a low-context culture?", c: "低語境文化特徵？", opts: ["Task immediately without social", "Task after social", "Relationship waste", "Relationship important"], a: 0, note: "直接投入任務(Get right to task)。" },
-                { q: "Even across generations, employee motivation is likely to:", c: "跨世代的員工動機可能：", opts: ["remain a mystery", "come from the job itself", "develop over time", "diminish in high achievers"], a: 1, note: "來自工作本身(Job itself)的內在動機通常是共通的。" },
-                { q: "Difference between job description and job specifications?", c: "職務說明(JD)與職務規格(JS)差異？", opts: ["JD short/JS long", "JD inventory/JS appraisal", "JD about job/JS about person", "JD summary/JS detailed"], a: 2, note: "JD描述工作，JS描述人(資格)。" },
-                { q: "Example of external recruitment source?", c: "外部招募例子？", opts: ["online job sites", "promotion", "transfer", "recommendations (internal)"], a: 0, note: "線上求職網站(Online sites)。" },
-                { q: "Check of work record, academic record, credit history...", c: "查核工作、學歷、信用紀錄...", opts: ["personality profile", "background investigation", "fidelity appraisal", "character review"], a: 1, note: "背景調查(Background investigation)。" },
-                { q: "Box 'Be Careful What You Post' indicates:", c: "「發文要小心」暗示社群媒體審視：", opts: ["Most companies consider online presence", "Less than 1/4 use it", "Laws restrict it", "Require no footprint"], a: 0, note: "多數公司會參考線上足跡。" },
-                { q: "First step in training and development programs?", c: "訓練發展計畫第一步？", opts: ["simulation parameters", "assess needs", "pre-employment tests", "designing programs"], a: 1, note: "評估需求(Assess needs)。" },
-                { q: "Management training giving assignments in variety of departments:", c: "經理人在不同部門輪調：", opts: ["job enlargement", "simulation", "job rotation", "apprenticeship"], a: 2, note: "工作輪調(Job rotation)。" },
-                { q: "Employers who want all employees to receive the same training may opt for:", c: "想讓所有員工接受一致訓練：", opts: ["apprenticeship", "mentorship", "job rotation", "online training"], a: 3, note: "線上訓練(Online training)最易標準化。" },
-                { q: "Good strategy to develop women and people of color because:", c: "培養女性與有色人種是好策略因為：", opts: ["laws increase", "attract diverse customer base", "less expensive", "less likely to change employers"], a: 1, note: "更能吸引多元顧客群。" },
-                { q: "Evaluation against established standards...", c: "依據標準評估表現...", opts: ["job analysis", "performance appraisal", "background check", "SWOT"], a: 1, note: "績效評估(Performance appraisal)。" },
-                { q: "Benefits like on-site haircuts, concierge service...", c: "現場理髮、禮賓等福利...", opts: ["real-time", "situational", "break time", "soft"], a: 3, note: "柔性/軟性福利(Soft benefits)。" },
-                { q: "Increase in consumer demand following WWII marked beginning of:", c: "二戰後需求大增開啟了：", opts: ["production era", "selling era", "marketing concept era", "customer relationship era"], a: 2, note: "行銷觀念時代(Marketing concept era)。" },
-                { q: "Firms seek to do more than simply sell... learn about customers:", c: "不僅賣產品，更想了解顧客...", opts: ["nonprofit marketing", "customer relationship management", "MBO", "marketing mix"], a: 1, note: "顧客關係管理(CRM)。" },
-                { q: "4 Ps help us remember basics of:", c: "4P 是什麼的基礎？", opts: ["communication strategy", "marketing mix", "product dev", "CRM"], a: 1, note: "行銷組合(Marketing Mix)。" },
-                { q: "Last step in marketing process often includes:", c: "行銷流程最後一步通常包含：", opts: ["differentiating", "setting price", "distributing", "building relationships"], a: 3, note: "建立關係(Building relationships)。" },
-                { q: "Successful marketing researchers will:", c: "成功行銷研究者會：", opts: ["focus on history", "primary sources only", "listen to customers", "rely on opinion"], a: 2, note: "傾聽顧客(Listen)。" },
-                { q: "Process of identifying factors that can affect marketing success:", c: "辨識影響行銷成功因素的過程：", opts: ["Environmental scanning", "Target marketing", "Niche marketing", "Segmentation"], a: 0, note: "環境掃描(Environmental scanning)。" },
-                { q: "Individuals want goods for personal consumption:", c: "為個人消費購買的個體：", opts: ["secondary market", "B2B", "tertiary", "consumer market"], a: 3, note: "消費者市場(Consumer market)。" },
-                { q: "Factor determines consumer vs industrial product:", c: "決定消費性或工業產品的因素：", opts: ["end use", "decision process", "who buyer represents", "new or used"], a: 0, note: "最終用途(End use)。" },
-                { q: "Segmentation based on values, attitudes, interests:", c: "依價值觀、態度、興趣區隔：", opts: ["demographic", "benefit", "psychographic", "normative"], a: 2, note: "心理變數(Psychographic)。" },
-                { q: "Segmentation based on age or education:", c: "依年齡或學歷區隔：", opts: ["benefit", "psychographic", "economic", "demographic"], a: 3, note: "人口統計(Demographic)。" },
-                { q: "Group of products physically similar:", c: "物理相似的一組產品：", opts: ["product matrix", "product line", "product mix", "total offer"], a: 1, note: "產品線(Product line)。" },
-                { q: "Purpose of __________ is to create real or perceived differences.", c: "創造真實或感知差異的目的：", opts: ["niche marketing", "product differentiation", "product mixing", "target marketing"], a: 1, note: "產品差異化(Product differentiation)。" },
-                { q: "Characteristic of product differentiation:", c: "產品差異化特徵：", opts: ["price only", "real or perceived differences", "restricts competition", "packaging only"], a: 1, note: "真實或感知的差異(Real or perceived)。" },
-                { q: "Chewing gum, minimum effort:", c: "口香糖，最小努力購買：", opts: ["shopping good", "specialty good", "convenience good", "industrial good"], a: 2, note: "便利品(Convenience good)。" },
-                { q: "Marketing role of packaging:", c: "包裝的行銷角色：", opts: ["least important", "change and improve basic product", "no influence", "most expensive"], a: 1, note: "改變並提升產品(Change and improve)。" },
-                { q: "Benefit of well-known brand name for buyer:", c: "知名品牌對買家的好處：", opts: ["quality assurance", "promotional efforts", "repeat purchases", "higher prices"], a: 0, note: "品質保證(Quality assurance)。" },
-                { q: "Plain packages, only name (oatmeal):", c: "簡樸包裝，只寫有名稱：", opts: ["private labels", "manufacturers brands", "generic goods", "universal code"], a: 2, note: "無品牌商品(Generic goods)。" },
-                { q: "Presents idea to potential customers to test reactions:", c: "呈現構想給潛在顧客測試反應：", opts: ["Product analysis", "Concept testing", "Product screening", "Prototype"], a: 1, note: "概念測試(Concept testing)。" },
-                { q: "Rapidly rising sales, very high profit, growing competitors:", c: "銷售與獲利急升、競爭者增加：", opts: ["growth", "maturity", "saturation", "decline"], a: 0, note: "成長期(Growth)。" },
-                { q: "Dominant firms establish pricing followed by others:", c: "主導廠商定價，他人跟隨：", opts: ["skimming", "penetration", "target costing", "price leadership"], a: 3, note: "價格領導(Price leadership)。" },
-                { q: "Sales promotion accurate:", c: "促銷準確敘述：", opts: ["targeted internally and externally", "only nonprofit", "dealers inappropriate", "only goal awareness"], a: 0, note: "對內(員工)與對外(消費者)皆可。" }
-            ]
-        };
-
-        // ==========================================
-        // 應用程式邏輯 (App Logic)
-        // ==========================================
-        const App = {
-            state: {
-                mode: null, // 'terms', 'tf', 'mc', 'review'
-                queue: [],
-                idx: 0,
-                score: 0,
-                wrongList: []
-            },
-            
-            // 初始化/回首頁
-            goHome: () => {
-                App.state.mode = null;
-                document.getElementById('progress-container').classList.add('hidden');
-                document.getElementById('status-bar').classList.add('hidden');
-                document.getElementById('app').innerHTML = `
-                    <div class="flex flex-col gap-6 fade-enter py-6">
-                        <div class="text-center space-y-2 mb-4">
-                            <h2 class="text-2xl font-bold text-slate-800">準備好考高分了嗎？🚀</h2>
-                            <p class="text-slate-500">選擇練習模式，開始衝刺！</p>
-                        </div>
-                        
-                        <button onclick="App.start('terms')" class="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 hover:border-blue-400 btn-touch flex items-center gap-4 group">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition">📖</div>
-                            <div class="text-left">
-                                <h3 class="font-bold text-lg text-slate-800">Key Terms 核心名詞</h3>
-                                <p class="text-xs text-slate-500">11 個必考名詞與定義</p>
-                            </div>
-                        </button>
-
-                        <button onclick="App.start('tf')" class="bg-white p-5 rounded-2xl shadow-sm border border-green-100 hover:border-green-400 btn-touch flex items-center gap-4 group">
-                            <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl group-hover:bg-green-600 group-hover:text-white transition">✅</div>
-                            <div class="text-left">
-                                <h3 class="font-bold text-lg text-slate-800">True / False 是非題</h3>
-                                <p class="text-xs text-slate-500">62 題觀念判斷</p>
-                            </div>
-                        </button>
-
-                        <button onclick="App.start('mc')" class="bg-white p-5 rounded-2xl shadow-sm border border-purple-100 hover:border-purple-400 btn-touch flex items-center gap-4 group">
-                            <div class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl group-hover:bg-purple-600 group-hover:text-white transition">🔢</div>
-                            <div class="text-left">
-                                <h3 class="font-bold text-lg text-slate-800">Multiple Choice 選擇題</h3>
-                                <p class="text-xs text-slate-500">51 題單選模擬</p>
-                            </div>
-                        </button>
-                    </div>
-                `;
-            },
-
-            // 開始模式
-            start: (mode) => {
-                App.state.mode = mode;
-                App.state.idx = 0;
-                App.state.score = 0;
-                App.state.wrongList = [];
-                
-                // 亂數排序題目 (Key Terms 不亂排以便閱讀，其他亂排)
-                if (mode === 'terms') {
-                    App.state.queue = [...DB.terms]; // 不亂排
-                } else if (mode === 'review') {
-                     // Review 模式直接使用傳入的 queue
-                } else {
-                    App.state.queue = [...DB[mode]].sort(() => Math.random() - 0.5);
-                }
-
-                if (App.state.queue.length === 0) return alert("沒有題目！");
-
-                // UI 設定
-                if (mode !== 'terms') {
-                    document.getElementById('progress-container').classList.remove('hidden');
-                    document.getElementById('status-bar').classList.remove('hidden');
-                    App.updateStatus();
-                }
-                
-                App.renderCard();
-            },
-
-            // 更新狀態列
-            updateStatus: () => {
-                const { idx, queue, score } = App.state;
-                const pct = ((idx) / queue.length) * 100;
-                document.getElementById('progress-bar').style.width = `${pct}%`;
-                document.getElementById('q-current').innerText = idx + 1;
-                document.getElementById('q-total').innerText = queue.length;
-                document.getElementById('score-val').innerText = score;
-            },
-
-            // 渲染卡片
-            renderCard: () => {
-                const { mode, idx, queue } = App.state;
-                
-                // 結束判斷
-                if (idx >= queue.length) {
-                    App.renderEnd();
-                    return;
-                }
-
-                const item = queue[idx];
-                const container = document.getElementById('app');
-                
-                // 根據模式渲染不同卡片
-                if (mode === 'terms') {
-                    container.innerHTML = `
-                        <div class="fade-enter w-full max-w-lg mx-auto mt-4">
-                            <div class="bg-white rounded-3xl card-shadow overflow-hidden min-h-[400px] flex flex-col relative border border-slate-100">
-                                <div class="absolute top-4 right-4 text-xs font-bold text-slate-300">${idx + 1}/${queue.length}</div>
-                                <div class="p-8 flex-grow flex flex-col justify-center items-center text-center bg-gradient-to-b from-blue-50/50 to-white">
-                                    <h2 class="text-2xl font-bold text-blue-900 mb-2">${item.t}</h2>
-                                    <h3 class="text-lg text-slate-600 font-medium">${item.c}</h3>
-                                </div>
-                                <div id="term-ans" class="hidden bg-slate-800 text-white p-6 space-y-4">
-                                    <div><span class="text-xs text-blue-300 uppercase font-bold tracking-wider">Definition</span><p class="text-base leading-relaxed">${item.def}</p></div>
-                                    <div class="pt-3 border-t border-slate-700"><span class="text-xs text-yellow-400 uppercase font-bold tracking-wider">Example</span><p class="text-sm text-slate-300">${item.ex}</p></div>
-                                </div>
-                                <div class="p-4 grid grid-cols-1 gap-2">
-                                    <button onclick="this.parentElement.previousElementSibling.classList.remove('hidden'); this.classList.add('hidden'); document.getElementById('btn-next').classList.remove('hidden')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md btn-touch">👀 顯示解析</button>
-                                    <button id="btn-next" onclick="App.state.idx++; App.renderCard()" class="hidden w-full bg-white border border-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl btn-touch">下一題 →</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    // 測驗模式 (TF / MC)
-                    const isTF = (item.opts === undefined);
-                    let optionsHTML = '';
-                    
-                    if (isTF) {
-                        optionsHTML = `
-                            <div class="grid grid-cols-2 gap-3 mt-6">
-                                <button onclick="App.checkAns(true)" class="py-4 rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 font-bold text-lg transition">True O</button>
-                                <button onclick="App.checkAns(false)" class="py-4 rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 font-bold text-lg transition">False X</button>
-                            </div>
-                        `;
-                    } else {
-                        optionsHTML = `<div class="space-y-3 mt-6">` + item.opts.map((opt, i) => `
-                            <button onclick="App.checkAns(${i})" class="w-full text-left p-4 rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 font-medium transition flex items-center">
-                                <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center mr-3 text-xs font-bold">${String.fromCharCode(65+i)}</span>
-                                ${opt}
-                            </button>
-                        `).join('') + `</div>`;
-                    }
-
-                    container.innerHTML = `
-                        <div class="fade-enter w-full max-w-lg mx-auto mt-2 pb-24">
-                            <div class="bg-white p-6 rounded-3xl card-shadow border border-slate-100">
-                                <div class="mb-4">
-                                    <span class="inline-block px-2 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-md mb-2 tracking-wider uppercase">${isTF ? 'True / False' : 'Multiple Choice'}</span>
-                                    <h3 class="text-lg font-bold text-slate-800 leading-snug">${item.q}</h3>
-                                    <p class="text-slate-500 mt-2 text-sm">${item.c}</p>
-                                </div>
-                                ${optionsHTML}
-                            </div>
-                            <div id="feedback-area" class="mt-4"></div>
-                        </div>
-                    `;
-                }
-            },
-
-            // 檢查答案
-            checkAns: (userAns) => {
-                const { queue, idx } = App.state;
-                const item = queue[idx];
-                const isCorrect = userAns === item.a;
-
-                // 鎖定按鈕
-                const btns = document.querySelectorAll('button');
-                btns.forEach(b => b.disabled = true);
-
-                if (isCorrect) {
-                    App.state.score++;
-                    App.updateStatus(); // 即時更新分數
-                } else {
-                    App.state.wrongList.push(item);
-                }
-
-                // 顯示回饋
-                const correctText = (item.opts) 
-                    ? `(${String.fromCharCode(65 + item.a)}) ${item.opts[item.a]}` 
-                    : (item.a ? 'True' : 'False');
-                
-                const feedbackHTML = `
-                    <div class="${isCorrect ? 'bg-green-50 border-green-200 text-green-900' : 'bg-red-50 border-red-200 text-red-900'} border p-5 rounded-2xl fade-enter shadow-sm">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="text-2xl">${isCorrect ? '🎉' : '❌'}</span>
-                            <span class="font-bold text-lg">${isCorrect ? '答對了！' : '答錯了'}</span>
-                        </div>
-                        <div class="text-sm opacity-90 mb-3">
-                            <span class="font-bold">正確答案：</span> ${correctText}
-                        </div>
-                        <div class="bg-white/60 p-3 rounded-xl text-sm leading-relaxed text-slate-700">
-                            <span class="font-bold">解析：</span> ${item.note || '參見題目描述。'}
-                        </div>
-                        <button onclick="App.nextQ()" class="mt-4 w-full bg-slate-800 text-white font-bold py-3 rounded-xl shadow-lg btn-touch">下一題 ➜</button>
-                    </div>
-                `;
-
-                const fbArea = document.getElementById('feedback-area');
-                fbArea.innerHTML = feedbackHTML;
-                fbArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            },
-
-            // 下一題
-            nextQ: () => {
-                App.state.idx++;
-                App.updateStatus();
-                App.renderCard();
-            },
-
-            // 結算畫面
-            renderEnd: () => {
-                const { score, queue, wrongList } = App.state;
-                document.getElementById('status-bar').classList.add('hidden');
-                document.getElementById('progress-container').classList.add('hidden');
-
-                const pct = Math.round((score / queue.length) * 100);
-                let msg = pct >= 90 ? "太神啦！A+ 預定！🌟" : pct >= 60 ? "及格通過，繼續保持！💪" : "還需多加練習喔！📚";
-                
-                let wrongBtnHTML = '';
-                if (wrongList.length > 0) {
-                    wrongBtnHTML = `
-                        <button onclick="App.startReview()" class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 rounded-xl btn-touch border border-red-200 mb-3">
-                            🔧 複習錯題 (${wrongList.length} 題)
-                        </button>
-                    `;
-                }
-
-                document.getElementById('app').innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-full fade-enter p-4">
-                        <div class="bg-white p-8 rounded-3xl card-shadow text-center w-full max-w-sm border border-slate-100">
-                            <div class="text-6xl mb-4">${pct >= 80 ? '🏆' : '📝'}</div>
-                            <h2 class="text-2xl font-bold text-slate-800 mb-1">測驗結束</h2>
-                            <p class="text-slate-500 mb-6">${msg}</p>
-                            
-                            <div class="flex justify-center items-end gap-2 mb-8">
-                                <span class="text-5xl font-bold text-blue-600">${score}</span>
-                                <span class="text-xl text-slate-400 font-medium mb-1">/ ${queue.length}</span>
-                            </div>
-
-                            ${wrongBtnHTML}
-                            
-                            <button onclick="App.goHome()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl btn-touch">
-                                🏠 回首頁
-                            </button>
-                        </div>
-                    </div>
-                `;
-            },
-
-            // 啟動錯題複習
-            startReview: () => {
-                App.state.queue = [...App.state.wrongList];
-                App.state.mode = 'review'; // 借用 review 模式標記，實際上還是走 tf/mc 渲染流程，但 queue 不同
-                App.state.wrongList = []; // 清空錯題列表，準備新一輪
-                App.state.idx = 0;
-                App.state.score = 0;
-                
-                document.getElementById('progress-container').classList.remove('hidden');
-                document.getElementById('status-bar').classList.remove('hidden');
-                App.updateStatus();
-                App.renderCard();
-            }
-        };
-
-        // 啟動
-        App.goHome();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
