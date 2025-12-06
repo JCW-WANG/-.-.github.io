@@ -3,799 +3,374 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>期末考複習系統 - Final Term Review</title>
+    <title>期末考衝刺系統 (完整版) | Final Exam Review</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    
     <style>
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .tab-active {
-            border-bottom: 3px solid #4f46e5;
-            color: #4f46e5;
-            font-weight: 700;
-        }
-        .tab-inactive {
-            color: #6b7280;
-            font-weight: 500;
-        }
-        .tab-inactive:hover {
-            color: #374151;
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .correct-answer {
-            background-color: #d1fae5 !important;
-            border-color: #10b981 !important;
-            color: #065f46 !important;
-        }
-        .wrong-answer {
-            background-color: #fee2e2 !important;
-            border-color: #ef4444 !important;
-            color: #991b1b !important;
-        }
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        /* 自定義捲軸 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
     </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5', // Indigo 600
+                        secondary: '#10B981', // Emerald 500
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-800 transition-colors duration-300 dark:bg-gray-900 dark:text-gray-100">
 
-    <header class="bg-white shadow-md sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 py-4">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center">
-                <i class="fa-solid fa-graduation-cap text-indigo-600 mr-2"></i>期末考衝刺複習
-            </h1>
-            <p class="text-center text-gray-500 text-sm mt-1">Management & Marketing Final Term Review</p>
+<div id="app" class="min-h-screen flex flex-col">
+    <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold text-primary dark:text-indigo-400">期末考衝刺系統 💯</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">完整題庫版</p>
+            </div>
+            <button @click="toggleDarkMode" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <span v-if="isDark">🌙 夜間</span>
+                <span v-else>☀️ 日間</span>
+            </button>
         </div>
         
-        <div class="max-w-4xl mx-auto px-4 mt-2 flex justify-center space-x-6 md:space-x-12 border-b border-gray-200">
-            <button onclick="switchTab('keyterms')" id="tab-keyterms" class="tab-active py-3 px-2 focus:outline-none transition-colors">
-                <i class="fa-solid fa-book mr-1"></i> Key Terms
-            </button>
-            <button onclick="switchTab('tf')" id="tab-tf" class="tab-inactive py-3 px-2 focus:outline-none transition-colors">
-                <i class="fa-solid fa-check-double mr-1"></i> 是非題
-            </button>
-            <button onclick="switchTab('mcq')" id="tab-mcq" class="tab-inactive py-3 px-2 focus:outline-none transition-colors">
-                <i class="fa-solid fa-list-ul mr-1"></i> 選擇題
+        <div class="flex overflow-x-auto bg-primary dark:bg-gray-800">
+            <button v-for="tab in tabs" :key="tab.id" 
+                @click="currentTab = tab.id"
+                :class="['flex-1 py-3 px-4 text-center font-bold whitespace-nowrap transition-colors duration-200 border-b-4', 
+                currentTab === tab.id ? 'border-yellow-400 text-white bg-indigo-700 dark:bg-gray-700' : 'border-transparent text-indigo-100 hover:bg-indigo-600 dark:text-gray-400 dark:hover:bg-gray-700']">
+                {{ tab.name }}
             </button>
         </div>
     </header>
 
-    <main class="flex-grow max-w-3xl mx-auto w-full px-4 py-6">
+    <main class="flex-grow max-w-4xl mx-auto px-4 py-8 w-full">
         
-        <div id="section-keyterms" class="fade-in space-y-6">
-            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded-r">
-                <p class="text-blue-700">
-                    <i class="fa-solid fa-info-circle mr-1"></i> 
-                    練習模式：請在文字框中嘗試輸入定義或關鍵字，然後點擊「顯示解析」來核對你的記憶。
-                </p>
+        <div v-if="currentTab === 'terms'" class="space-y-8">
+            <div class="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4 rounded text-sm md:text-base">
+                <p>💡 <b>提示：</b>題目顯示中英文對照。請先在腦中回想定義，再點擊按鈕查看解析。</p>
             </div>
-            <div id="keyterms-container"></div>
+
+            <div v-for="(item, index) in keyTerms" :key="index" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="inline-block bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs font-bold px-2 py-1 rounded">Term {{ index + 1 }}</span>
+                    </div>
+                    
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ item.term_en }}</h3>
+                    <h4 class="text-xl md:text-2xl font-medium text-gray-600 dark:text-gray-300 mb-6">{{ item.term_ch }}</h4>
+                    
+                    <button @click="item.show = !item.show" 
+                        class="w-full py-3 px-6 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center gap-2"
+                        :class="item.show ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300' : 'bg-primary text-white shadow-lg hover:bg-indigo-700 hover:scale-[1.01]'">
+                        <span>{{ item.show ? '隱藏解析' : '💡 顯示提示與答案' }}</span>
+                    </button>
+
+                    <transition name="fade">
+                        <div v-if="item.show" class="mt-6 p-6 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800">
+                            <div class="mb-4">
+                                <span class="font-bold text-green-700 dark:text-green-400 text-lg block mb-1">📖 解釋：</span>
+                                <p class="text-gray-800 dark:text-gray-200 leading-relaxed text-lg">{{ item.def }}</p>
+                            </div>
+                            <div>
+                                <span class="font-bold text-green-700 dark:text-green-400 text-lg block mb-1">🌟 舉例：</span>
+                                <p class="text-gray-800 dark:text-gray-200 leading-relaxed text-lg">{{ item.ex }}</p>
+                            </div>
+                        </div>
+                    </transition>
+                </div>
+            </div>
         </div>
 
-        <div id="section-tf" class="hidden fade-in space-y-6">
-             <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-4 rounded-r">
-                <p class="text-indigo-700">
-                    <i class="fa-solid fa-pen-nib mr-1"></i> 
-                    是非題：請判斷敘述的真偽。答題後會立即顯示正確答案與解析。
-                </p>
+        <div v-if="currentTab === 'tf'" class="space-y-8">
+            <div class="flex justify-between items-center bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-400 p-4 rounded">
+                <p class="font-bold">請判斷下列敘述對錯 (僅顯示中文題目)</p>
+                <button @click="resetTF" class="bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded shadow hover:bg-gray-100 transition text-sm">🔄 重置</button>
             </div>
-            <div id="tf-container"></div>
+
+            <div v-for="(q, index) in tfQuestions" :key="q.id" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 md:p-8 relative">
+                <span class="absolute top-4 right-4 text-xs text-gray-400">#{{ q.id }}</span>
+                
+                <h3 class="text-xl md:text-2xl font-medium text-gray-900 dark:text-gray-100 mb-6 leading-relaxed">
+                    {{ index + 1 }}. {{ q.question }}
+                </h3>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <button @click="answerTF(q, true)" 
+                        :disabled="q.userAnswer !== null"
+                        class="py-4 rounded-lg font-bold text-xl border-2 transition-all flex items-center justify-center gap-2"
+                        :class="{
+                            'border-gray-200 hover:border-green-500 hover:text-green-600 dark:border-gray-600': q.userAnswer === null,
+                            'bg-green-500 text-white border-green-500': q.userAnswer === true,
+                            'opacity-40': q.userAnswer !== null && q.userAnswer !== true
+                        }">
+                        ⭕ True
+                    </button>
+                    <button @click="answerTF(q, false)" 
+                        :disabled="q.userAnswer !== null"
+                        class="py-4 rounded-lg font-bold text-xl border-2 transition-all flex items-center justify-center gap-2"
+                        :class="{
+                            'border-gray-200 hover:border-red-500 hover:text-red-600 dark:border-gray-600': q.userAnswer === null,
+                            'bg-red-500 text-white border-red-500': q.userAnswer === false,
+                            'opacity-40': q.userAnswer !== null && q.userAnswer !== false
+                        }">
+                        ❌ False
+                    </button>
+                </div>
+
+                <div v-if="q.userAnswer !== null" class="mt-6 p-4 rounded-lg border-2"
+                    :class="q.userAnswer === q.correct ? 'bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-800' : 'bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-800'">
+                    <p class="text-lg font-bold mb-1" :class="q.userAnswer === q.correct ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'">
+                        {{ q.userAnswer === q.correct ? '🎉 答對了！' : '⚠️ 答錯了！' }}
+                    </p>
+                    <p class="text-gray-800 dark:text-gray-200 text-lg">
+                        正確答案是：<span class="font-bold">{{ q.correct ? 'True (⭕)' : 'False (❌)' }}</span>
+                    </p>
+                    <p class="mt-2 text-gray-600 dark:text-gray-400 text-base border-t border-gray-200 dark:border-gray-700 pt-2" v-if="q.note">
+                        💡 解析：{{ q.note }}
+                    </p>
+                </div>
+            </div>
         </div>
 
-        <div id="section-mcq" class="hidden fade-in space-y-6">
-             <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-4 rounded-r">
-                <p class="text-green-700">
-                    <i class="fa-solid fa-list-check mr-1"></i> 
-                    選擇題：點擊你認為正確的選項。
-                </p>
+        <div v-if="currentTab === 'mcq'" class="space-y-8">
+            <div class="flex justify-between items-center bg-purple-50 dark:bg-purple-900/30 border-l-4 border-purple-400 p-4 rounded">
+                <p class="font-bold">選擇題 (僅顯示中文題目)</p>
+                <button @click="resetMCQ" class="bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded shadow hover:bg-gray-100 transition text-sm">🔄 重置</button>
             </div>
-            <div id="mcq-container"></div>
+
+            <div v-for="(q, index) in mcqQuestions" :key="q.id" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 md:p-8 relative">
+                <span class="absolute top-4 right-4 text-xs text-gray-400">#{{ q.id }}</span>
+                
+                <h3 class="text-xl md:text-2xl font-medium text-gray-900 dark:text-gray-100 mb-6 leading-relaxed">
+                    {{ index + 1 }}. {{ q.question }}
+                </h3>
+
+                <div class="space-y-3">
+                    <button v-for="(optText, optKey) in q.options" :key="optKey"
+                        @click="answerMCQ(q, optKey)"
+                        :disabled="q.userAnswer !== null"
+                        class="w-full text-left p-4 rounded-lg border-2 text-lg transition-all relative"
+                        :class="{
+                            'border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700': q.userAnswer === null,
+                            'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/50 dark:text-green-100': q.userAnswer !== null && optKey === q.correct,
+                            'bg-red-100 border-red-500 text-red-800 dark:bg-red-900/50 dark:text-red-100': q.userAnswer === optKey && optKey !== q.correct,
+                            'opacity-50': q.userAnswer !== null && optKey !== q.correct && optKey !== q.userAnswer
+                        }">
+                        <span class="font-bold mr-2">{{ optKey }})</span> {{ optText }}
+                        <span v-if="q.userAnswer !== null && optKey === q.correct" class="absolute right-4">✅</span>
+                        <span v-if="q.userAnswer === optKey && optKey !== q.correct" class="absolute right-4">❌</span>
+                    </button>
+                </div>
+
+                <div v-if="q.userAnswer !== null" class="mt-6 p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800">
+                    <p class="text-lg font-bold text-indigo-900 dark:text-indigo-300">
+                        正確答案：{{ q.correct }}
+                    </p>
+                    <p class="text-indigo-800 dark:text-indigo-200 mt-1">
+                        {{ q.note ? q.note : '請重新閱讀題目關鍵字，確保理解概念。' }}
+                    </p>
+                </div>
+            </div>
         </div>
 
     </main>
 
-    <footer class="bg-gray-800 text-white py-6 mt-8">
-        <div class="text-center">
-            <p>&copy; 2025 Final Exam Prep. Study Hard!</p>
-            <p class="text-gray-400 text-sm mt-2">Designed for optimal student experience.</p>
-        </div>
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6 text-center text-gray-500 text-sm">
+        <p>祝期末考順利 High Pass! 🚀</p>
     </footer>
+</div>
 
-    <script>
-        // === Data Source ===
+<script>
+    const { createApp } = Vue
 
-        const keyTermsData = [
-            {
-                id: 1,
-                termEn: "participative (Democratic) leadership",
-                termCh: "參與式(民主)領導",
-                def: "解釋：領導者讓員工參與決策、大量授權、鼓勵共同參與決定工作目標與方法，並透過有效的回饋來發展員工能力。領導者像是教練、引導者。",
-                ex: "舉例：領導者開會時，先聽取大家意見，再找出大家都同意的決策。"
-            },
-            {
-                id: 2,
-                termEn: "leadership",
-                termCh: "領導",
-                def: "解釋：一個引導團隊、影響團隊以達成目標的過程。",
-                ex: "舉例：「風雨過後的指揮官」: 先強調任務分工、行動紀律，同時也親自清理，關懷士兵與居民，最後達成任務目標。"
-            },
-            {
-                id: 3,
-                termEn: "intrinsic motivation",
-                termCh: "內在動機",
-                def: "解釋：個人因為本身的興趣、成就感等而願意去做某件事，即使沒有外在獎勵也願意。",
-                ex: "舉例：在畫畫前告知畫完會有獎勵，結果未畫完，即使之後不給獎勵了，還是會繼續畫完的人。"
-            },
-            {
-                id: 4,
-                termEn: "extrinsic motivation",
-                termCh: "外在動機",
-                def: "解釋：個人因為想獲得外部獎賞或避免懲罰而進行某行為，不是發自內心想去做，而是因為有「誘因」或「壓力」才做。",
-                ex: "舉例：在畫畫前告知畫完會有獎勵，結果未畫完，但在之後不給獎勵後，就不畫了。"
-            },
-            {
-                id: 5,
-                termEn: "training and development",
-                termCh: "訓練與發展",
-                def: "解釋：訓練著重目前工作上所需之知識與技能，以短期為主，目的在於提升當下職務的技能與表現；發展著重於員工個人成長(未來導向)，長期為主，目的在於培養未來工作或生涯所需的能力。",
-                ex: "舉例：訓練 : 系統/機器操作；發展 : 帶團隊(領導課程)。"
-            },
-            {
-                id: 6,
-                termEn: "Cafeteria benefit plans",
-                termCh: "自助餐式福利計劃",
-                def: "解釋：企業提供一套基本福利，由員工依照自己的需求狀況，在一定額度內點選它們所需的額外福利。",
-                ex: "舉例：員工可以在額度內選擇進修補助、健身房補助、保險或子女教育津貼等。"
-            },
-            {
-                id: 7,
-                termEn: "marketing mix",
-                termCh: "行銷組合",
-                def: "解釋：包含Product(產品) + Price(價格) + Place(通路) + Promotion(推廣)。",
-                ex: "舉例：以星巴克為例。Product：不只賣咖啡，還賣「放鬆」與「氛圍」。Price：價格比超商高，但比精品咖啡親民。Place：開在市區、百貨公司，也有外送與 APP。Promotion：推出「買一送一」、季節限定飲品。"
-            },
-            {
-                id: 8,
-                termEn: "segmentation",
-                termCh: "市場區隔",
-                def: "解釋：針對所選定之目標市場，依照適合的區隔變數(人口統計/地理/心理/行為)來進行區隔。目的是將一個大的異質市場，藉由區隔變為許多小的同質市場。",
-                ex: "舉例：Netflix使用行為區隔來根據觀眾的觀看習慣推薦內容。"
-            },
-            {
-                id: 9,
-                termEn: "positioning",
-                termCh: "產品定位",
-                def: "解釋：針對選定的市場，透過清楚定義品牌要傳遞的價值，並和競爭對手區隔（差異化），在顧客心中佔有獨特位置、讓顧客知道「為什麼要選你」。",
-                ex: "舉例：價格定位；以價格差異建立競爭優勢(廉價航空)。"
-            },
-            {
-                id: 10,
-                termEn: "marketing",
-                termCh: "行銷",
-                def: "解釋：一套包含某些活動和機構的程序，藉此來創造、溝通與傳達產品與價值給進行交換的對方。重點在於「生產我們所能賣的產品」，先確定顧客需要，才去生產符合需要的產品。",
-                ex: "舉例：防疫表單，保險公司根據疫情趨勢與顧客焦慮，設計專屬方案並透過多通路推廣。"
-            },
-            {
-                id: 11,
-                termEn: "the product life cycle",
-                termCh: "產品生命週期",
-                def: "解釋：產品從導入期進入市場,到衰退期退出市場的整個過程。(導入期/成長期/成熟期/衰退期)。",
-                ex: "舉例：導入期:Apple Vision Pro(消費者仍在觀望)；成長期:三星摺疊手機(銷售成長)；成熟期:iPhone(靠品牌維持市佔)；衰退期:iPod(被取代)。"
+    createApp({
+        data() {
+            return {
+                isDark: false,
+                currentTab: 'terms',
+                tabs: [
+                    { id: 'terms', name: '🔑 Key Terms' },
+                    { id: 'tf', name: '⭕❌ 是非題' },
+                    { id: 'mcq', name: '📋 選擇題' }
+                ],
+                // 全部 Key Terms 資料
+                keyTerms: [
+                    { term_en: 'Participative (Democratic) Leadership', term_ch: '參與式(民主)領導', def: '領導者讓員工參與決策、大量授權、鼓勵共同參與決定工作目標與方法，並透過有效的回饋來發展員工能力。領導者像是教練、引導者。', ex: '領導者開會時，先聽取大家意見，再找出大家都同意的決策。', show: false },
+                    { term_en: 'Leadership', term_ch: '領導', def: '一個引導團隊、影響團隊以達成目標的過程。', ex: '「風雨過後的指揮官」: 先強調任務分工、行動紀律，同時也親自清理，關懷士兵與居民，最後達成任務目標。', show: false },
+                    { term_en: 'Intrinsic Motivation', term_ch: '內在動機', def: '個人因為本身的興趣、成就感等而願意去做某件事，即使沒有外在獎勵也願意。', ex: '在畫畫前告知畫完會有獎勵，結果為畫完，即使之後不給獎勵了，還是會繼續畫完的人。', show: false },
+                    { term_en: 'Extrinsic Motivation', term_ch: '外在動機', def: '個人因為想獲得外部獎賞或避免懲罰而進行某行為，不是發自內心想去做，而是因為有「誘因」或「壓力」才做。', ex: '在畫畫前告知畫完會有獎勵，結果為畫完，但在之後不給獎勵後，就不畫了。', show: false },
+                    { term_en: 'Training and Development', term_ch: '訓練與發展', def: '訓練著重目前工作上所需之知識與技能，以短期為主，目的在於提升當下職務的技能與表現；發展著重於員工個人成長(未來導向)，長期為主，目的在於培養未來工作或生涯所需的能力。', ex: '訓練 : 系統/機器操作；發展 : 帶團隊(領導課程)。', show: false },
+                    { term_en: 'Cafeteria Benefit Plans', term_ch: '自助餐式福利計劃', def: '企業提供一套基本福利，由員工依照自己的需求狀況，在一定額度內點選它們所需的額外福利。', ex: '員工可以在額度內選擇進修補助、健身房補助、保險或子女教育津貼等。', show: false },
+                    { term_en: 'Marketing Mix', term_ch: '行銷組合', def: '包含 Product (產品) + Price (價格) + Place (通路) + Promotion (推廣)。', ex: '星巴克：Product(賣氛圍)、Price(比超商貴但比精品便宜)、Place(市區/APP)、Promotion(買一送一)。', show: false },
+                    { term_en: 'Segmentation', term_ch: '市場區隔', def: '針對所選定之目標市場，依照適合的區隔變數 (人口統計/地理/心理/行為) 來進行區隔。目的是將一個大的異質市場，藉由區隔變為許多小的同質市場。', ex: 'Netflix使用行為區隔來根據觀眾的觀看習慣推薦內容。', show: false },
+                    { term_en: 'Positioning', term_ch: '產品定位', def: '針對選定的市場，透過清楚定義品牌要傳遞的價值，並和競爭對手區隔（差異化），在顧客心中佔有獨特位置、讓顧客知道「為什麼要選你」。', ex: '廉價航空：以價格差異建立競爭優勢。', show: false },
+                    { term_en: 'Marketing', term_ch: '行銷', def: '一套包含某些活動和機構的程序，藉此來創造、溝通與傳達產品與價值給進行交換的對方。重點在於「生產我們所能賣的產品」，先確定顧客需要，才去生產符合需要的產品。', ex: '保險公司根據疫情趨勢與顧客焦慮，設計專屬防疫保單。', show: false },
+                    { term_en: 'The Product Life Cycle', term_ch: '產品生命週期', def: '產品從導入期進入市場，到衰退期退出市場的整個過程。(導入期/成長期/成熟期/衰退期)。', ex: '導入期(Apple Vision Pro)、成長期(三星摺疊機)、成熟期(iPhone)、衰退期(iPod)。', show: false }
+                ],
+                // 是非題 (已校正答案，僅顯示中文)
+                tfQuestions: [
+                    { id: 45, question: '四項主要的管理職能為規劃、組織、領導與控制。', correct: true, userAnswer: null },
+                    { id: 46, question: '領導職能的一項趨勢是授權員工，讓他們擁有盡可能多的自由，以便自我引導並自我激勵。', correct: true, userAnswer: null },
+                    { id: 47, question: '一個擅長基層管理的人，自然也有可能成為優秀的中階或高階主管。', correct: false, userAnswer: null, note: '基層管理重技術技能，高階重概念與人際技能，不一定能自動轉化。' },
+                    { id: 48, question: '人際關係技巧包含與領導、指導、士氣建立及支持性有關的能力。', correct: true, userAnswer: null },
+                    { id: 49, question: '經理人與領導者的差異之一是：經理人追求穩定，而領導者擁抱變革。', correct: true, userAnswer: null },
+                    { id: 50, question: '專制型領導者的特質包含溫暖、友善與合作。', correct: false, userAnswer: null, note: '這通常是參與式或支持型領導的特質。專制型偏向命令與控制。' },
+                    { id: 51, question: '專制式領導最適合喜歡獨立工作並自行決策的員工。', correct: false, userAnswer: null, note: '專制式適合需要明確指令的員工；獨立員工適合放任式。' },
+                    { id: 52, question: '當經理人對所有員工都一貫使用相同的領導風格時，會達到最佳管理效果。', correct: false, userAnswer: null, note: '應採取權變(情境)領導，視員工與情境調整風格。' },
+                    { id: 53, question: 'Daylon 反應迅速且果斷。他大多自行決策、下達命令，並期望下屬無條件服從。這種行為屬於自由放任式領導風格的例子。', correct: false, userAnswer: null, note: '這是專制式 (Autocratic) 領導。' },
+                    { id: 55, question: '若經理人能妥善進行規劃與組織，就不需要再參與控制工作。', correct: false, userAnswer: null, note: '控制是確保目標達成的必要職能，無論規劃多好都需要。' },
+                    { id: 57, question: '由於動機源自個人內在，管理者能協助員工提升動機的空間非常有限。', correct: false, userAnswer: null, note: '管理者可透過激勵因子(獎賞、認可、工作設計)大幅影響員工動機。' },
+                    { id: 58, question: '霍桑研究指出，員工的工作生產力變化不大，但若給予他們在工作中批判思考的機會，態度會有明顯改善。', correct: false, userAnswer: null, note: '霍桑效應發現「被關注」本身就能提升生產力，不僅僅是態度。' },
+                    { id: 59, question: '依據馬斯洛理論，人們會先滿足低層次需求，之後才會追求高層次需求。', correct: true, userAnswer: null },
+                    { id: 60, question: '根據公平理論，若感覺情況不公，他們會試圖透過減少努力、增加努力或合理化自身不值得同等待遇的方式，來恢復公平。', correct: true, userAnswer: null },
+                    { id: 61, question: '在運用開放式溝通激勵員工時，最好保持訊息模糊不清。', correct: false, userAnswer: null, note: '開放式溝通強透明與清晰。' },
+                    { id: 62, question: '作為激勵技巧，讓員工知道自己表現良好比發放獎金的效果更弱。', correct: false, userAnswer: null, note: '許多研究顯示，認可與讚賞往往比金錢更能長期激勵員工。' },
+                    { id: 63, question: '覺得不被重視是人們離職的常見原因之一。', correct: true, userAnswer: null },
+                    { id: 64, question: 'Gavan 希望促進公司員工與管理者之間更開放的雙向溝通。為達成此目標，他能做的最重要事情之一就是成為一位善於傾聽的人。', correct: true, userAnswer: null },
+                    { id: 66, question: '不論文化背景為何，大多數員工對激勵方式的反應都相同。', correct: false, userAnswer: null, note: '文化差異會顯著影響對激勵方式的反應。' },
+                    { id: 67, question: '在面對當今文化多元的勞動力時，管理者應對所有人採取一致的激勵方式。', correct: false, userAnswer: null, note: '應採取客製化或具文化敏感度的激勵方式。' },
+                    { id: 69, question: '人力資源工作聚焦在與職務與工作現場直接相關的議題，而不像長照或托育這類雖影響工作、但不直接屬於工作的事項。', correct: false, userAnswer: null, note: '現代 HR 也關注員工福利，包含托育長照等影響工作表現的生活因素。' },
+                    { id: 70, question: '和其他管理領域一樣，人力資源管理由規劃開始。', correct: true, userAnswer: null },
+                    { id: 71, question: '人力資源規劃需要同時評估組織未來對各類勞動力的需求，以及未來或目前的人力供給狀況。', correct: true, userAnswer: null },
+                    { id: 72, question: '在招募時，人資需吸引具備合適技能且能與企業文化與領導風格契合的人才。', correct: true, userAnswer: null },
+                    { id: 73, question: '甄選是在法規框架下蒐集資訊並決定錄用人選，使結果符合個人與組織的最大利益。', correct: true, userAnswer: null },
+                    { id: 74, question: '員工訓練著重短期技能，員工發展著重長期能力。', correct: true, userAnswer: null },
+                    { id: 75, question: '雖然培訓與發展女性與少數族裔管理者在法律與道德面向常被支持，但從經濟角度看「很少有利可圖」。', correct: false, userAnswer: null, note: '多元化管理能帶來更多市場洞察與創新，經濟效益顯著。' },
+                    { id: 76, question: '績效評估是依既定標準衡量員工表現，並作為升遷、薪酬、訓練或解僱等決策依據。', correct: true, userAnswer: null },
+                    { id: 77, question: '多數資深員工即使未被明確告知，也能清楚知道被期待的表現。', correct: false, userAnswer: null, note: '無論資歷，明確的期望溝通都是績效管理的關鍵。' },
+                    { id: 78, question: '績效評估僅對新人與基層主管有用、對高階管理幾乎無價值。', correct: false, userAnswer: null, note: '高階主管同樣需要回饋與評估以校準策略目標。' },
+                    { id: 79, question: '許多公司現正外包員工福利計畫的管理。', correct: true, userAnswer: null },
+                    { id: 80, question: '員工有時偏好會員資格、公務車或業務費等附帶福利，而非加薪，因為這些福利多半不需課稅（相較薪資）。', correct: true, userAnswer: null },
+                    { id: 82, question: '行銷理念包含三個部分：消費者導向、服務導向、廣告導向。', correct: false, userAnswer: null, note: '應為：消費者導向、服務導向、利潤導向(或長期觀點)，而非單純廣告導向。' },
+                    { id: 91, question: 'Ogden 汽車做法(書面估價、保固、致電)顯示其正在運用顧客關係管理的概念。', correct: true, userAnswer: null },
+                    { id: 94, question: '行銷組合中所涉及的主要因素有時被稱為行銷的五個無形要素。', correct: false, userAnswer: null, note: '是 4P (產品、價格、通路、推廣)。' },
+                    { id: 95, question: '行銷過程包含關於如何以最佳方式將產品交付給消費者的決策。', correct: true, userAnswer: null },
+                    { id: 96, question: '行銷過程的最後一步通常包括與顧客建立持續的關係。', correct: true, userAnswer: null },
+                    { id: 97, question: '行銷研究過程的第一步是收集相關資料。', correct: false, userAnswer: null, note: '第一步通常是「定義問題或機會」。' },
+                    { id: 98, question: 'Tech Universe Consulting 的線上調查與訪談都是主要資料來源。', correct: true, userAnswer: null },
+                    { id: 101, question: '購買者的購買理由是判定商品屬於消費性產品或企業對企業（B2B）產品的關鍵因素。', correct: true, userAnswer: null },
+                    { id: 102, question: '市場區隔讓公司能將具有相似特徵的消費者歸為同一群體。', correct: true, userAnswer: null },
+                    { id: 103, question: 'Kiara 強調維持現有客戶的滿意度，這種做法符合大眾行銷的理念。', correct: false, userAnswer: null, note: '這屬於關係行銷 (Relationship Marketing)，大眾行銷較少針對個別客戶維繫。' },
+                    { id: 107, question: '從策略行銷的觀點來看，「整體產品提供」包含了消費者在決定是否購買時會評估的所有要素。', correct: true, userAnswer: null },
+                    { id: 108, question: '一家企業所銷售的不同產品線，構成該組織的產品組合。', correct: true, userAnswer: null },
+                    { id: 109, question: '即使產品之間的實際差異極小，行銷人員仍會透過定價、廣告與包裝來區隔自家產品與競爭者的產品。', correct: true, userAnswer: null },
+                    { id: 110, question: '非搜尋性商品與服務通常是因衝動而購買，且對消費者不提供任何附加價值。', correct: false, userAnswer: null, note: '非搜尋性商品(如保險、棺材)通常是因為必要或未察覺需求，並非無價值或純衝動。' },
+                    { id: 111, question: 'Amir 預計造訪多家零售商比較功能品質價格。這顯示對 Amir 來說，躺椅屬於「選購性商品」。', correct: true, userAnswer: null },
+                    { id: 113, question: '商標是一種品牌，並對品牌名稱及設計獲得專屬的法律保護。', correct: true, userAnswer: null },
+                    { id: 114, question: '品牌名稱能協助賣方推出新產品，並創造提高價格的機會。', correct: true, userAnswer: null },
+                    { id: 115, question: '概念測試是將產品構想帶給行銷經理，藉以測試他們的反應。', correct: false, userAnswer: null, note: '概念測試的對象應是「潛在消費者」，而非內部經理。' },
+                    { id: 116, question: '產品生命週期的四個階段是導入、市場、交換與衰退。', correct: false, userAnswer: null, note: '是：導入期、成長期、成熟期、衰退期。' },
+                    { id: 117, question: '為了計算損益平衡點，Rosa 必須知道產品的售價、總固定成本，以及每單位的變動成本。', correct: true, userAnswer: null },
+                    { id: 121, question: '廣播廣告的成本高於電視廣告，但通常能觸及更多人。', correct: false, userAnswer: null, note: '電視廣告通常成本更高且觸及視覺聽覺。' },
+                    { id: 122, question: '當行銷人員在像 Google 這樣的大型線上搜尋引擎上投放廣告時，他們能觸及最想要接觸的目標族群。', correct: true, userAnswer: null },
+                    { id: 123, question: '企業支付置入性行銷的費用，以便讓其產品成為電視節目或電影情節的一部分。', correct: true, userAnswer: null },
+                    { id: 124, question: '銷售流程的第一步包含尋找潛在顧客，並挑選出最有可能購買的對象。', correct: true, userAnswer: null },
+                    { id: 125, question: '個人銷售是企業推廣產品時成本最低的方式之一。', correct: false, userAnswer: null, note: '個人銷售通常是「單位接觸成本最高」的方式。' },
+                    { id: 126, question: '有效運用公共關係包括評估公眾態度，並執行計畫以獲取公眾的認同。', correct: true, userAnswer: null },
+                    { id: 127, question: '行銷常被稱為公共關係的「發聲手臂」。', correct: false, userAnswer: null, note: '通常廣告被稱為行銷的發聲手臂；PR 功能不同。' },
+                    { id: 128, question: '以促銷手段舉辦的商展主要針對企業對企業(B2B)客戶。', correct: true, userAnswer: null },
+                    { id: 129, question: '社群媒體提供了進行正面與負面口碑推廣的機會。', correct: true, userAnswer: null },
+                    { id: 130, question: '推式促銷策略的目標，是透過提供誘因給批發商與零售商，使他們願意進貨並銷售產品。', correct: true, userAnswer: null }
+                ],
+                // 選擇題 (已校正答案，僅顯示中文)
+                mcqQuestions: [
+                    { id: 133, question: '當代管理更強調以下哪一項？', options: { A: '可以有效衡量的個人工作。', B: '團隊合作。', C: '努力消除管理中的控制職能。', D: '更仰賴政府提供資金。' }, correct: 'B', userAnswer: null },
+                    { id: 135, question: '以下哪一項特質對現代管理者最有幫助？', options: { A: '嚴格紀律者', B: '監督者', C: '組織者', D: '技術專長者' }, correct: 'C', userAnswer: null, note: '現代管理者更像教練、組織協調者而非單純技術專家或監督者。註：若選 D 在某些技術基層也被接受，但 C 更符合通論。' },
+                    { id: 136, question: '領導、指導與士氣培養皆屬於管理者的哪一類技能？', options: { A: '技術技能', B: '理論技能', C: '實證技能', D: '人際關係技能' }, correct: 'D', userAnswer: null },
+                    { id: 137, question: '__________ 涉及為他人建立可追隨的願景，確立企業價值與倫理，並改變組織運作方式，使其更有效率與效能。', options: { A: '組織', B: '生產管理', C: '策略性規劃', D: '領導' }, correct: 'D', userAnswer: null },
+                    { id: 138, question: '那些願意傾聽部屬意見並讓他們參與決策的管理者，採用的是哪一種領導風格？', options: { A: '專制式', B: '放任式', C: '參與式', D: '官僚式' }, correct: 'C', userAnswer: null },
+                    { id: 139, question: '有效領導的關鍵在於哪一項能力？', options: { A: '維持秩序、穩定與控制。', B: '溝通願景並凝聚他人共同實現該願景。', C: '精通部屬工作的技術細節。', D: '以專制方式處理人際互動。' }, correct: 'B', userAnswer: null },
+                    { id: 142, question: '管理者與領導者之間的一項差異是：', options: { A: '管理者存在於企業中，而領導者則活躍於非營利組織。', B: '管理者追求穩定，而領導者擁抱變革。', C: '管理者採用專制方式，而領導者偏好民主方式。', D: '所有員工都能管理，但只有高層才能領導。' }, correct: 'B', userAnswer: null },
+                    { id: 145, question: '關於有效領導，下列哪個說法最正確？', options: { A: '有效領導者都具有相同的性格特質。', B: '最有效的領導風格取決於被領導者及所處情境。', C: '民主式領導幾乎總能提升組織效率。', D: '有效的管理者會始終維持同一種領導風格。' }, correct: 'B', userAnswer: null },
+                    { id: 148, question: '在何種情況下，專制式領導可能最為有效？', options: { A: '當部屬是受過高度訓練的專業人員。', B: '當組織面臨緊急狀況時。', C: '當員工喜歡表達意見並參與決策時。', D: '當管理者不確定最佳策略時。' }, correct: 'B', userAnswer: null },
+                    { id: 150, question: '關於領導風格，下列哪項說法最正確？', options: { A: '管理者應選擇一種風格並始終如一地使用。', B: '管理者無法控制自己採用的領導風格。', C: '有效的管理者通常會依情況運用多種領導風格。', D: '管理者應先採用專制式，再視情況改為民主式。' }, correct: 'C', userAnswer: null },
+                    { id: 154, question: '人們在把工作做好時所感受到的個人滿足是一種__________獎酬。', options: { A: '認知性的', B: '外在的', C: '生理性的', D: '內在的' }, correct: 'D', userAnswer: null },
+                    { id: 155, question: '由他人因良好表現而給予的獎酬是__________獎酬。', options: { A: '條件性的', B: '內在的', C: '外在的', D: '次要的' }, correct: 'C', userAnswer: null },
+                    { id: 156, question: '在馬斯洛的需求層次中，__________需求指的是人類想達到自身最大潛能的渴望。', options: { A: '社會需求', B: '尊重需求', C: '自我導向需求', D: '自我實現需求' }, correct: 'D', userAnswer: null },
+                    { id: 157, question: '公平理論指出，員工若__________，就會有良好表現。', options: { A: '了解自身職責的性質', B: '有機會在組織中給他人留下深刻印象', C: '相信自己所獲得的報酬相較於相似職位的他人是公平地補償其努力', D: '知道主管已設定合理且明確的績效目標' }, correct: 'C', userAnswer: null },
+                    { id: 159, question: '依據公平理論，下列哪項陳述最為正確？', options: { A: '激勵員工的最佳方法是給每個人相同的獎酬。', B: '員工對公平與否的感受會影響其動機程度。', C: '員工通常能準確評估自己對公司的貢獻。', D: '在美國，員工傾向於只關心自身情況。' }, correct: 'B', userAnswer: null },
+                    { id: 161, question: '與員工獲得有關自身表現的直接且明確資訊量有關的工作特性稱為：', options: { A: '聯結性', B: '回饋', C: '自主性', D: '擴增性' }, correct: 'B', userAnswer: null },
+                    { id: 162, question: '組織可以透過以下方式建立開放式溝通：', options: { A: '建立如軍事機構般清晰的指揮鏈。', B: '保持工作空間有條理，確保每位主管都有自己的私人辦公室。', C: '舉辦研討會教導員工如何更好地傾聽管理層。', D: '營造一種獎勵傾聽的組織文化。' }, correct: 'D', userAnswer: null },
+                    { id: 164, question: '高語境文化的特徵是什麼？', options: { A: '員工一開始工作就直接投入任務。', B: '員工在適應工作日後直接投入任務。', C: '建立人際關係被視為浪費時間。', D: '建立關係與培養團體信任被視為非常重要，且在執行商務任務之前進行。' }, correct: 'D', userAnswer: null },
+                    { id: 166, question: '低語境文化的特徵是什麼？', options: { A: '員工開始工作後立即投入任務，無需花前半小時進行社交。', B: '員工在滿足社交需求後再投入工作。', C: '建立關係被視為浪費時間。', D: '建立關係被視為非常重要，並在執行業務前進行。' }, correct: 'A', userAnswer: null },
+                    { id: 168, question: '即使跨越不同世代，員工的動機仍可能：', options: { A: '依然是個謎。', B: '來自工作本身。', C: '隨時間在員工身上逐漸形成。', D: '在高成就員工身上隨之減弱。' }, correct: 'B', userAnswer: null },
+                    { id: 171, question: '下列何者指出職務說明（job description）與職務規格（job specifications）的關鍵差異？', options: { A: '職務說明著重短期，職務規格著重長期。', B: '職務說明基於人力資源清冊，職務規格是績效評估結果。', C: '職務說明是關於「工作本身」；職務規格是關於「執行該工作的人」所需條件。', D: '職務說明是摘要；職務規格是完整詳細說明。' }, correct: 'C', userAnswer: null },
+                    { id: 173, question: '下列何者屬於外部招募來源的例子？', options: { A: '線上求職網站', B: '將現有員工升遷至新職位', C: '自其他辦公室調入員工', D: '員工推薦' }, correct: 'A', userAnswer: null },
+                    { id: 174, question: '對潛在員工的工作紀錄、學術紀錄、信用紀錄與推薦人進行查核稱為__________。', options: { A: '人格特質剖析', B: '背景調查', C: '忠誠度評估', D: '品格審查' }, correct: 'B', userAnswer: null },
+                    { id: 175, question: '名為「你的個人檔案／履歷：發文要小心」的方框對於在甄選流程中使用社群媒體審視有何暗示？', options: { A: '多數公司在評估應徵者時，會將其線上足跡納入考量。', B: '少於四分之一的雇主會用社群媒體來篩選潛在雇員。', C: '隱私法規限制公司在雇用決策時考慮應徵者的網路活動。', D: '現代公司要求潛在應徵者不要留下任何數位足跡。' }, correct: 'A', userAnswer: null },
+                    { id: 177, question: '建立訓練與發展計畫的第一步是', options: { A: '設定合適的模擬參數。', B: '評估組織的需求與員工的技能。', C: '進行僱用前測驗。', D: '開始設計課程。' }, correct: 'B', userAnswer: null },
+                    { id: 179, question: '讓經理人在不同部門輪調以接觸組織內多種職能的管理訓練計畫稱為', options: { A: '工作擴大化', B: '模擬訓練', C: '職務輪調', D: '學徒制計畫' }, correct: 'C', userAnswer: null },
+                    { id: 181, question: '隨著科技更為成熟，想讓所有員工接受一致訓練的雇主可能會選擇', options: { A: '學徒制計畫', B: '導師制計畫', C: '職務輪調計畫', D: '線上訓練課程' }, correct: 'D', userAnswer: null },
+                    { id: 183, question: '培養女性與有色人種擔任管理職是一項良好策略，因為', options: { A: '平權行動相關法規顯然會持續大幅增加。', B: '女性與有色人種在管理職上更能吸引多元的顧客族群。', C: '訓練這些多元群體的成本較低。', D: '這些群體在其職涯中較不可能更換雇主。' }, correct: 'B', userAnswer: null },
+                    { id: 185, question: '__________是以既定標準評估員工績效水準，以據以決定升遷、薪酬、追加訓練或解僱的制度。', options: { A: '職務分析', B: '績效評估', C: '背景查核', D: 'SWOT 分析' }, correct: 'B', userAnswer: null },
+                    { id: 186, question: '許多公司現在為員工提供__________福利，例如現場理髮與禮賓服務，協助員工在工作與家庭生活之間取得平衡。', options: { A: '即時型', B: '情境型', C: '休息型', D: '柔性（軟性）' }, correct: 'D', userAnswer: null },
+                    { id: 188, question: '二戰後消費者需求的大幅增加，標誌著__________的開始。', options: { A: '生產時代', B: '推銷時代', C: '行銷觀念時代', D: '顧客關係時代' }, correct: 'C', userAnswer: null },
+                    { id: 190, question: '採行__________的企業不僅僅是賣出產品；其目標是盡可能了解顧客，並在長期內以商品與服務滿足他們。', options: { A: '非營利行銷', B: '顧客關係管理', C: '目標管理', D: '行銷組合' }, correct: 'B', userAnswer: null },
+                    { id: 192, question: '雖然四個 P 有助於我們記住__________的基本構成，但它們並未呈現整個行銷流程中的所有要素。', options: { A: '溝通策略', B: '行銷組合', C: '產品開發流程', D: '顧客關係行銷流程' }, correct: 'B', userAnswer: null },
+                    { id: 193, question: '行銷流程的最後一步通常包括', options: { A: '將產品與競品做出差異化。', B: '設定適當價格。', C: '決定最佳的配銷方式。', D: '建立與顧客的關係。' }, correct: 'D', userAnswer: null },
+                    { id: 195, question: '成功的行銷研究人員會', options: { A: '將重點放在過去的顧客需求。', B: '盡可能從第一手來源蒐集資訊。', C: '聆聽現有顧客與其他利害關係人的意見。', D: '在決策時依賴自身經驗與個人看法。' }, correct: 'C', userAnswer: null },
+                    { id: 197, question: '__________是用來辨識影響行銷成功的各種因素之過程。', options: { A: '環境掃描', B: '目標行銷', C: '利基行銷', D: '區隔分析' }, correct: 'A', userAnswer: null },
+                    { id: 198, question: '哪個術語指的是想為個人消費而購買商品與服務，且具備購買資源的個體？', options: { A: '次級市場', B: '企業對企業市場', C: '第三級市場', D: '消費者市場' }, correct: 'D', userAnswer: null },
+                    { id: 199, question: '決定產品被歸類為消費性產品或工業產品的因素是', options: { A: '產品的最終用途。', B: '購買該商品或服務時的決策流程。', C: '購買者所代表的身分。', D: '商品是新貨或二手。' }, correct: 'A', userAnswer: null },
+                    { id: 201, question: '採用__________區隔的公司，會根據價值觀、態度或興趣將市場分成各群組。', options: { A: '人口統計', B: '利益', C: '心理變數', D: '規範' }, correct: 'C', userAnswer: null },
+                    { id: 202, question: '採用__________區隔的公司，會依據年齡或學歷將市場分群。', options: { A: '利益', B: '心理變數', 'C': '經濟', D: '人口統計' }, correct: 'D', userAnswer: null },
+                    { id: 204, question: '哪個術語指的是企業所提供、在物理屬性相似或目標市場相近的一組產品？', options: { A: '產品矩陣', B: '產品線', C: '產品組合', D: '總體產品提供' }, correct: 'B', userAnswer: null },
+                    { id: 205, question: '__________的目的在於創造產品在真實或感知上的差異。', options: { A: '利基行銷', B: '產品差異化', C: '產品混合', D: '目標行銷' }, correct: 'B', userAnswer: null },
+                    { id: 206, question: '下列何者為產品差異化的一項特徵？', options: { A: '完全由價格決定。', B: '可建立在產品的真實差異或消費者感知差異上。', C: '會限制價格競爭與市場進入。', D: '總是僅由包裝決定。' }, correct: 'B', userAnswer: null },
+                    { id: 208, question: 'Mindent 是一個新口香糖品牌...消費者想以最少努力購買這類產品。Mindent 屬於', options: { A: '選購品', B: '專用品', C: '便利品', D: '工業品' }, correct: 'C', userAnswer: null },
+                    { id: 211, question: '關於包裝在行銷中的角色，下列何者正確？', options: { A: '包裝是行銷組合中最不重要的要素。', B: '包裝能改變並提升一項基本產品。', C: '包裝不會影響消費者的決策過程。', D: '包裝是行銷流程中成本最高的要素。' }, correct: 'B', userAnswer: null },
+                    { id: 213, question: '從買方觀點來看，知名品牌產品的一項好處是', options: { A: '品質保證', B: '有助於促銷活動', C: '提高重複購買', D: '區隔產品以便訂更高價格' }, correct: 'A', userAnswer: null },
+                    { id: 216, question: '許多超市販售僅標示內容物名稱的簡樸包裝商品...這些商品屬於', options: { A: '自有品牌', B: '製造商品牌', C: '無品牌（通用）商品', D: '通用碼品牌' }, correct: 'C', userAnswer: null },
+                    { id: 218, question: '__________會將新產品概念呈現給潛在顧客以測試其反應。', options: { A: '產品分析', B: '概念測試', C: '產品篩選', D: '原型開發' }, correct: 'B', userAnswer: null },
+                    { id: 219, question: '產品生命週期的哪個階段具有銷售快速成長、獲利很高且競爭者增加的特徵？', options: { A: '成長期', B: '成熟期', C: '飽和期', D: '衰退期' }, correct: 'A', userAnswer: null },
+                    { id: 220, question: '一種以競爭為基礎的定價策略稱為__________，係由一家或多家主導廠商設定整個產業競爭者所遵循的定價做法。', options: { A: '撇脂定價', B: '滲透定價', C: '目標成本法', D: '價格領導' }, correct: 'D', userAnswer: null },
+                    { id: 221, question: '關於促銷，何者最正確？', options: { A: '促銷可同時針對內部（員工、通路）與外部（消費者）對象。', B: '促銷僅針對非營利組織。', C: '經銷商不適合作為促銷對象。', D: '促銷的唯一目標是建立消費者認知。' }, correct: 'A', userAnswer: null }
+                ]
             }
-        ];
-
-        const tfData = [
-            { id: 1, q: "四項主要的管理職能為規劃、組織、領導與控制。", a: true, exp: "正確。這是管理的四個基本功能 (POLC)。" },
-            { id: 2, q: "領導職能的一項趨勢是授權員工，讓他們擁有盡可能多的自由，以便自我引導並自我激勵。", a: true, exp: "正確。現代領導趨勢強調賦權 (Empowerment)。" },
-            { id: 3, q: "一個擅長基層管理的人，自然也有可能成為優秀的中階或高階主管。", a: false, exp: "錯誤。不同階層管理者所需的核心技能不同（如基層重技術，高階重概念），不一定能自然轉換。" },
-            { id: 4, q: "人際關係技巧包含與領導、指導、士氣建立及支持性有關的能力。", a: true, exp: "正確。這些都是人際互動與激勵的關鍵技巧。" },
-            { id: 5, q: "經理人與領導者的差異之一是：經理人追求穩定，而領導者擁抱變革。", a: true, exp: "正確。管理者通常關注維持秩序與現有流程，領導者則關注願景與改變。" },
-            { id: 6, q: "專制型領導者的特質包含溫暖、友善與合作。", a: false, exp: "錯誤。專制型 (Autocratic) 通常指獨斷決策，較少強調合作與友善氣氛。" },
-            { id: 7, q: "專制式領導最適合喜歡獨立工作並自行決策的員工。", a: false, exp: "錯誤。專制式適合需要明確指令的情況；喜歡獨立決策的員工適合放任式 (Free-rein)。" },
-            { id: 8, q: "當經理人對所有員工都一貫使用相同的領導風格時，會達到最佳管理效果。", a: false, exp: "錯誤。應採用權變理論 (Situational)，視員工與情境調整風格。" },
-            { id: 9, q: "Daylon 反應迅速且果斷。他大多自行決策、下達命令，並期望下屬無條件服從。這種行為屬於自由放任式領導風格的例子。", a: false, exp: "錯誤。自行決策並要求服從是「專制式 (Autocratic)」領導，而非自由放任。" },
-            { id: 10, q: "若經理人能妥善進行規劃與組織，就不需要再參與控制工作。", a: false, exp: "錯誤。控制 (Controlling) 是為了確保執行結果符合規劃，是不可或缺的步驟。" },
-            { id: 11, q: "由於動機源自個人內在，管理者能協助員工提升動機的空間非常有限。", a: false, exp: "錯誤。管理者可以透過設計工作、獎酬制度與文化來激發外在與內在動機。" },
-            { id: 12, q: "霍桑研究指出，員工的工作生產力變化不大，但若給予他們在工作中批判思考的機會，態度會有明顯改善。", a: false, exp: "錯誤。霍桑效應發現，當員工感覺被關注與重視時，生產力會提升（不僅是態度）。" },
-            { id: 13, q: "依據馬斯洛理論，人們會先滿足低層次需求，之後才會追求高層次需求。", a: true, exp: "正確。這是需求層次理論的基本假設。" },
-            { id: 14, q: "多數員工重視被公平對待。根據公平理論，若感覺情況不公，他們會試圖透過減少努力、增加努力或合理化自身不值得同等待遇的方式，來恢復公平。", a: true, exp: "正確。這是公平理論 (Equity Theory) 的核心機制。" },
-            { id: 15, q: "在運用開放式溝通激勵員工時，最好保持訊息模糊不清。", a: false, exp: "錯誤。開放式溝通需要明確、透明且真誠。" },
-            { id: 16, q: "作為激勵技巧，讓員工知道自己表現良好比發放獎金的效果更弱。", a: false, exp: "錯誤。對許多人來說，認可與讚賞（內在激勵）往往比金錢更具持久效果。" },
-            { id: 17, q: "覺得不被重視是人們離職的常見原因之一。", a: true, exp: "正確。缺乏認可是高離職率的主因。" },
-            { id: 18, q: "Gavan 希望促進公司員工與管理者之間更開放的雙向溝通。為達成此目標，他能做的最重要事情之一就是成為一位善於傾聽的人。", a: true, exp: "正確。傾聽是雙向溝通的基礎。" },
-            { id: 19, q: "不論文化背景為何，大多數員工對激勵方式的反應都相同。", a: false, exp: "錯誤。文化差異會顯著影響員工對激勵因子（如個人主義 vs 集體主義）的反應。" },
-            { id: 20, q: "在面對當今文化多元的勞動力時，管理者應對所有人採取一致的激勵方式。", a: false, exp: "錯誤。應採取跨文化管理，針對不同背景調整激勵策略。" },
-            { id: 21, q: "人力資源工作聚焦在與職務與工作現場直接相關的議題，而不像長照或托育這類雖影響工作、但不直接屬於工作的事項。", a: false, exp: "錯誤。現代 HR 也關注員工福利與工作生活平衡，包括托育與長照協助。" },
-            { id: 22, q: "和其他管理領域一樣，人力資源管理由規劃開始。", a: true, exp: "正確。HR 規劃是第一步。" },
-            { id: 23, q: "人力資源規劃需要同時評估組織未來對各類勞動力的需求，以及未來或目前的人力供給狀況。", a: true, exp: "正確。需評估需求與供給以決定招募或縮編。" },
-            { id: 24, q: "在招募時，人資需吸引具備合適技能且能與企業文化與領導風格契合的人才。", a: true, exp: "正確。文化契合度 (Fit) 與技能同等重要。" },
-            { id: 25, q: "甄選是在法規框架下蒐集資訊並決定錄用人選，使結果符合個人與組織的最大利益。", a: true, exp: "正確。" },
-            { id: 26, q: "員工訓練著重短期技能，員工發展著重長期能力。", a: true, exp: "正確。訓練 (Training) 為當下，發展 (Development) 為未來。" },
-            { id: 27, q: "雖然培訓與發展女性與少數族裔管理者在法律與道德面向常被支持，但從經濟角度看「很少有利可圖」的說法並不正確。", a: true, exp: "正確。多元化管理能帶來更多市場洞察與創新，具經濟效益。" },
-            { id: 28, q: "績效評估是依既定標準衡量員工表現，並作為升遷、薪酬、訓練或解僱等決策依據。", a: true, exp: "正確。" },
-            { id: 29, q: "多數資深員工即使未被明確告知，也能清楚知道被期待的表現——此說法不正確。", a: true, exp: "正確（題目說該說法不正確，意即：即使是資深員工也需要明確的期望溝通）。" },
-            { id: 30, q: "績效評估僅對新人與基層主管有用、對高階管理幾乎無價值——此說法不正確。", a: true, exp: "正確（題目說該說法不正確，意即：績效評估對所有層級皆重要）。" },
-            { id: 31, q: "許多公司現正外包員工福利計畫的管理。", a: true, exp: "正確。為了降低成本與專業化，外包很常見。" },
-            { id: 32, q: "員工有時偏好會員資格、公務車或業務費等附帶福利，而非加薪，因為這些福利多半不需課稅（相較薪資）。", a: true, exp: "正確。非貨幣福利通常有稅務優勢。" },
-            { id: 33, q: "行銷理念包含三個部分：消費者導向、服務導向、廣告導向。", a: false, exp: "錯誤。應為：消費者導向、服務導向、利潤導向 (Profit orientation)，而非單純廣告。" },
-            { id: 34, q: "Ogden 汽車會了解顧客想要什麼，然後決定如何最有效地滿足他們的需求...這些做法顯示 Ogden 汽車正在運用顧客關係管理的概念。", a: true, exp: "正確。CRM 強調了解並滿足顧客以建立長期關係。" },
-            { id: 35, q: "行銷組合中所涉及的主要因素有時被稱為行銷的五個無形要素。", a: false, exp: "錯誤。通常稱為 4P (Product, Price, Place, Promotion)，並非五個無形要素。" },
-            { id: 36, q: "行銷過程包含關於如何以最佳方式將產品交付給消費者的決策。", a: true, exp: "正確。這屬於通路 (Place) 的決策。" },
-            { id: 37, q: "行銷過程的最後一步通常包括與顧客建立持續的關係。", a: true, exp: "正確。售後服務與關係建立是循環的關鍵。" },
-            { id: 38, q: "行銷研究過程的第一步是收集相關資料。", a: false, exp: "錯誤。第一步通常是「定義問題或機會」。" },
-            { id: 39, q: "Tech Universe Consulting 剛結束對部分現有顧客的線上調查...這些線上調查與訪談都是 Tech Universe Consulting 的主要資料來源。", a: true, exp: "正確。自己收集的一手資料稱為初級資料 (Primary Data)。" },
-            { id: 40, q: "購買者的購買理由是判定商品屬於消費性產品或企業對企業（B2B）產品的關鍵因素。", a: true, exp: "正確。端看是自用 (B2C) 還是用於生產/轉售 (B2B)。" },
-            { id: 41, q: "市場區隔讓公司能將具有相似特徵的消費者歸為同一群體。", a: true, exp: "正確。" },
-            { id: 42, q: "Kiara 強調維持現有客戶的滿意度，這種做法符合大眾行銷的理念。", a: false, exp: "錯誤。這更符合關係行銷 (Relationship Marketing)；大眾行銷通常較少關注個別現有客戶維繫。" },
-            { id: 43, q: "從策略行銷的觀點來看，「整體產品提供」包含了消費者在決定是否購買時會評估的所有要素。", a: true, exp: "正確。包含實體產品、品牌、保固、服務等。" },
-            { id: 44, q: "一家企業所銷售的不同產品線，構成該組織的產品組合。", a: true, exp: "正確。Product Mix 是所有 Product Lines 的集合。" },
-            { id: 45, q: "即使產品之間的實際差異極小，行銷人員仍會透過定價、廣告與包裝來區隔自家產品與競爭者的產品。", a: true, exp: "正確。這是產品差異化 (Differentiation) 的策略。" },
-            { id: 46, q: "非搜尋性商品與服務通常是因衝動而購買，且對消費者不提供任何附加價值。", a: false, exp: "錯誤。非搜尋性 (Unsought) 是指消費者不知道或不想買（如保險、喪葬），但仍具價值，並非單純衝動購買。" },
-            { id: 47, q: "Amir 預計造訪多家零售商與網站，來比較不同躺椅品牌...這種行為顯示對 Amir 來說，躺椅屬於「選購性商品」。", a: true, exp: "正確。選購品 (Shopping goods) 的特徵就是消費者會花時間比價比品質。" },
-            { id: 48, q: "商標是一種品牌，並對品牌名稱及設計獲得專屬的法律保護。", a: true, exp: "正確。" },
-            { id: 49, q: "品牌名稱能協助賣方推出新產品，並創造提高價格的機會。", a: true, exp: "正確。品牌權益 (Brand Equity) 能帶來溢價。" },
-            { id: 50, q: "概念測試是將產品構想帶給行銷經理，藉以測試他們的反應。", a: false, exp: "錯誤。概念測試的對象應該是「潛在消費者」，而非內部經理。" },
-            { id: 51, q: "產品生命週期的四個階段是導入、市場、交換與衰退。", a: false, exp: "錯誤。應為：導入、成長、成熟、衰退。" },
-            { id: 52, q: "為了計算這個損益平衡點，她必須知道產品的售價、總固定成本，以及每單位的變動成本。", a: true, exp: "正確。BEP = 固定成本 / (單價 - 單位變動成本)。" },
-            { id: 53, q: "廣播廣告的成本高於電視廣告，但通常能觸及更多人。", a: false, exp: "錯誤。廣播通常比電視便宜，但觸及率與視覺衝擊較低。" },
-            { id: 54, q: "當行銷人員在像 Google 這樣的大型線上搜尋引擎上投放廣告時，他們能觸及最想要接觸的目標族群。", a: true, exp: "正確。搜尋廣告具有高度針對性 (Targeting)。" },
-            { id: 55, q: "企業支付置入性行銷的費用，以便讓其產品成為電視節目或電影情節的一部分。", a: true, exp: "正確。" },
-            { id: 56, q: "銷售流程的第一步包含尋找潛在顧客，並挑選出最有可能購買的對象。", a: true, exp: "正確。Prospecting and Qualifying。" },
-            { id: 57, q: "個人銷售是企業推廣產品時成本最低的方式之一。", a: false, exp: "錯誤。人員銷售 (Personal Selling) 通常是成本最高的推廣方式（以每次接觸成本計）。" },
-            { id: 58, q: "有效運用公共關係包括評估公眾態度，並執行計畫以獲取公眾的認同。", a: true, exp: "正確。" },
-            { id: 59, q: "行銷常被稱為公共關係的「發聲手臂」。", a: false, exp: "錯誤。公關 (PR) 與行銷是不同功能，公關更側重形象與關係，非單純行銷的工具。" },
-            { id: 60, q: "以促銷手段舉辦的商展主要針對企業對企業B2B客戶。", a: true, exp: "正確。商展 (Trade shows) 是 B2B 的重要行銷管道。" },
-            { id: 61, q: "社群媒體提供了進行正面與負面口碑推廣的機會。", a: true, exp: "正確。" },
-            { id: 62, q: "推式促銷策略的目標，是透過提供誘因給批發商與零售商，使他們願意進貨並銷售產品...", a: true, exp: "正確。Push Strategy 是推向通路。" }
-        ];
-
-        const mcqData = [
-            {
-                id: 1,
-                q: "當代管理更強調以下哪一項？",
-                options: ["A) 可以有效衡量的個人工作。", "B) 團隊合作。", "C) 努力消除管理中的控制職能。", "D) 更仰賴政府提供資金。"],
-                ans: 1, // Index of B
-                exp: "現代管理趨勢從個人英雄主義轉向團隊合作 (Teamwork) 與協作。"
+        },
+        methods: {
+            toggleDarkMode() {
+                this.isDark = !this.isDark
+                if (this.isDark) {
+                    document.documentElement.classList.add('dark')
+                } else {
+                    document.documentElement.classList.remove('dark')
+                }
             },
-            {
-                id: 2,
-                q: "以下哪一項特質對現代管理者最有幫助？",
-                options: ["A) 嚴格紀律者", "B) 監督者", "C) 組織者", "D) 技術專長者"],
-                ans: 2, // C
-                exp: "現代管理者更像是教練、協調者或組織者 (Organizer)，而非傳統的監督或紀律執行者。"
+            answerTF(q, choice) {
+                if (q.userAnswer !== null) return;
+                q.userAnswer = choice;
             },
-            {
-                id: 3,
-                q: "領導、指導與士氣培養皆屬於管理者的哪一類技能？",
-                options: ["A) 技術技能", "B) 理論技能", "C) 實證技能", "D) 人際關係技能"],
-                ans: 3, // D
-                exp: "與人互動、激勵相關的屬於人際關係技能 (Human relations skills)。"
+            resetTF() {
+                if(confirm('確定要重置所有是非題嗎？')) {
+                    this.tfQuestions.forEach(q => q.userAnswer = null);
+                }
             },
-            {
-                id: 4,
-                q: "__________ 涉及為他人建立可追隨的願景，確立企業價值與倫理，並改變組織運作方式，使其更有效率與效能。",
-                options: ["A) 組織", "B) 生產管理", "C) 策略性規劃", "D) 領導"],
-                ans: 3, // D
-                exp: "創造願景 (Vision) 與價值觀是領導 (Leadership) 的核心定義。"
+            answerMCQ(q, choice) {
+                if (q.userAnswer !== null) return;
+                q.userAnswer = choice;
             },
-            {
-                id: 5,
-                q: "那些願意傾聽部屬意見並讓他們參與決策的管理者，採用的是哪一種領導風格？",
-                options: ["A) 專制式", "B) 放任式", "C) 參與式", "D) 官僚式"],
-                ans: 2, // C
-                exp: "讓員工參與決策即為參與式 (Participative) 或民主式領導。"
-            },
-            {
-                id: 6,
-                q: "有效領導的關鍵在於哪一項能力？",
-                options: ["A) 維持秩序、穩定與控制。", "B) 溝通願景並凝聚他人共同實現該願景。", "C) 精通部屬工作的技術細節。", "D) 以專制方式處理人際互動。"],
-                ans: 1, // B
-                exp: "領導者不同於管理者，關鍵在於溝通願景 (Vision) 並激勵他人。"
-            },
-            {
-                id: 7,
-                q: "管理者與領導者之間的一項差異是：",
-                options: ["A) 管理者存在於企業中，而領導者則活躍於非營利組織。", "B) 管理者追求穩定，而領導者擁抱變革。", "C) 管理者採用專制方式，而領導者偏好民主方式。", "D) 所有員工都能管理，但只有高層才能領導。"],
-                ans: 1, // B
-                exp: "管理者處理複雜性與穩定，領導者處理變革 (Change)。"
-            },
-            {
-                id: 8,
-                q: "關於有效領導，下列哪個說法最正確？",
-                options: ["A) 有效領導者都具有相同的性格特質。", "B) 最有效的領導風格取決於被領導者及所處情境。", "C) 民主式領導幾乎總能提升組織效率。", "D) 有效的管理者會始終維持同一種領導風格。"],
-                ans: 1, // B
-                exp: "這是權變理論 (Contingency approach)，沒有最好的風格，只有最適合情境的風格。"
-            },
-            {
-                id: 9,
-                q: "在何種情況下，專制式領導可能最為有效？",
-                options: ["A) 當部屬是受過高度訓練的專業人員。", "B) 當組織面臨緊急狀況時。", "C) 當員工喜歡表達意見並參與決策時。", "D) 當管理者不確定最佳策略時。"],
-                ans: 1, // B
-                exp: "緊急危難時 (Emergency)，需要快速決斷，專制式領導最有效率。"
-            },
-            {
-                id: 10,
-                q: "關於領導風格，下列哪項說法最正確？",
-                options: ["A) 管理者應選擇一種風格並始終如一地使用。", "B) 管理者無法控制自己採用的領導風格。", "C) 有效的管理者通常會依情況運用多種領導風格。", "D) 管理者應先採用專制式，再視情況改為民主式。"],
-                ans: 2, // C
-                exp: "靈活運用多種風格以適應不同情境是高效能管理者的特徵。"
-            },
-            {
-                id: 11,
-                q: "人們在把工作做好時所感受到的個人滿足是一種__________獎酬。",
-                options: ["A) 認知性的", "B) 外在的", "C) 生理性的", "D) 內在的"],
-                ans: 3, // D
-                exp: "發自內心的滿足感屬於內在獎酬 (Intrinsic reward)。"
-            },
-            {
-                id: 12,
-                q: "由他人因良好表現而給予的獎酬是__________獎酬。",
-                options: ["A) 條件性的", "B) 內在的", "C) 外在的", "D) 次要的"],
-                ans: 2, // C
-                exp: "來自外部（如加薪、讚賞）屬於外在獎酬 (Extrinsic reward)。"
-            },
-            {
-                id: 13,
-                q: "在馬斯洛的需求層次中，__________需求指的是人類想達到自身最大潛能的渴望。",
-                options: ["A) 社會需求", "B) 尊重需求", "C) 自我導向需求", "D) 自我實現需求"],
-                ans: 3, // D
-                exp: "發揮潛能是最高層次的自我實現 (Self-actualization)。"
-            },
-            {
-                id: 14,
-                q: "公平理論指出，員工若__________，就會有良好表現。",
-                options: ["A) 了解自身職責的性質。", "B) 有機會在組織中給他人留下深刻印象。", "C) 相信自己所獲得的報酬相較於相似職位的他人是公平地補償其努力。", "D) 知道主管已設定合理且明確的績效目標。"],
-                ans: 2, // C
-                exp: "公平理論關注投入與產出的比率是否與他人相等 (Equity)。"
-            },
-            {
-                id: 15,
-                q: "依據公平理論，下列哪項陳述最為正確？",
-                options: ["A) 激勵員工的最佳方法是給每個人相同的獎酬。", "B) 員工對公平與否的感受會影響其動機程度。", "C) 員工通常能準確評估自己對公司的貢獻。", "D) 在美國，員工傾向於只關心自身情況..."],
-                ans: 1, // B
-                exp: "感知道的公平性 (Perception of fairness) 直接影響動機。"
-            },
-            {
-                id: 16,
-                q: "與員工獲得有關自身表現的直接且明確資訊量有關的工作特性稱為：",
-                options: ["A) 聯結性", "B) 回饋", "C) 自主性", "D) 擴增性"],
-                ans: 1, // B
-                exp: "獲得績效資訊即為回饋 (Feedback)。"
-            },
-            {
-                id: 17,
-                q: "組織可以透過以下方式建立開放式溝通：",
-                options: ["A) 建立如軍事機構般清晰的指揮鏈。", "B) 保持工作空間有條理，確保每位主管都有私人辦公室。", "C) 舉辦研討會教導員工如何更好地傾聽管理層。", "D) 營造一種獎勵傾聽的組織文化。"],
-                ans: 3, // D
-                exp: "獎勵傾聽與開放文化是建立溝通的關鍵，而非加強階層控制。"
-            },
-            {
-                id: 18,
-                q: "高語境文化的特徵是什麼？",
-                options: ["A) 員工一開始工作就直接投入任務...", "B) 員工在適應工作日後直接投入任務。", "C) 建立人際關係被視為浪費時間。", "D) 建立關係與培養團體信任被視為非常重要，且在執行商務任務之前進行。"],
-                ans: 3, // D
-                exp: "高語境文化 (High-context) 重視背景、關係與信任建立。"
-            },
-            {
-                id: 19,
-                q: "低語境文化的特徵是什麼？",
-                options: ["A) 員工開始工作後立即投入任務，無需花前半小時進行社交。", "B) 員工在滿足社交需求後再投入工作。", "C) 建立關係被視為浪費時間。", "D) 建立關係被視為非常重要..."],
-                ans: 0, // A
-                exp: "低語境文化 (Low-context) 重視直接溝通與任務效率。"
-            },
-            {
-                id: 20,
-                q: "即使跨越不同世代，員工的動機仍可能：",
-                options: ["A) 依然是個謎...", "B) 來自工作本身。", "C) 隨時間在員工身上逐漸形成。", "D) 在高成就員工身上隨之減弱。"],
-                ans: 1, // B
-                exp: "工作本身的意義感與成就感通常是跨世代的驅動力。"
-            },
-            {
-                id: 21,
-                q: "下列何者指出職務說明（job description）與職務規格（job specifications）的關鍵差異？",
-                options: ["A) 職務說明著重於工作的短期目標...", "B) 職務說明是根據人力資源清冊...", "C) 職務說明是關於「工作本身」的描述；職務規格是關於「執行該工作的人」所需條件的描述。", "D) 職務說明是對工作內容的簡要摘要..."],
-                ans: 2, // C
-                exp: "Description = What (Job); Specification = Who (Person/Skills)。"
-            },
-            {
-                id: 22,
-                q: "下列何者屬於外部招募來源的例子？",
-                options: ["A) 線上求職網站", "B) 將現有員工升遷至新職位", "C) 自其他辦公室調入員工", "D) 員工推薦"],
-                ans: 0, // A
-                exp: "線上求職網站是向組織外部尋找人才。"
-            },
-            {
-                id: 23,
-                q: "對潛在員工的工作紀錄、學術紀錄、信用紀錄與推薦人進行查核稱為__________。",
-                options: ["A) 人格特質剖析", "B) 背景調查", "C) 忠誠度評估", "D) 品格審查"],
-                ans: 1, // B
-                exp: "這是 Background investigation 的定義。"
-            },
-            {
-                id: 24,
-                q: "名為「你的個人檔案／履歷：發文要小心」的方框對於在甄選流程中使用社群媒體審視有何暗示？",
-                options: ["A) 多數公司在評估應徵者時，會將其線上足跡納入考量。", "B) 少於四分之一的雇主會用...", "C) 隱私法規限制公司...", "D) 現代公司要求潛在應徵者不要留下..."],
-                ans: 0, // A
-                exp: "現代招募常會查看候選人的社群媒體表現。"
-            },
-            {
-                id: 25,
-                q: "建立訓練與發展計畫的第一步是：",
-                options: ["A) 設定合適的模擬參數。", "B) 評估組織的需求與員工的技能。", "C) 進行僱用前測驗。", "D) 開始設計課程。"],
-                ans: 1, // B
-                exp: "需求評估 (Needs assessment) 永遠是訓練的第一步。"
-            },
-            {
-                id: 26,
-                q: "讓經理人在不同部門輪調以接觸組織內多種職能的管理訓練計畫稱為：",
-                options: ["A) 工作擴大化。", "B) 模擬訓練。", "C) 職務輪調。", "D) 學徒制計畫。"],
-                ans: 2, // C
-                exp: "Job rotation 即為職務輪調。"
-            },
-            {
-                id: 27,
-                q: "隨著科技更為成熟，想讓所有員工接受一致訓練的雇主可能會選擇：",
-                options: ["A) 學徒制計畫。", "B) 導師制計畫。", "C) 職務輪調計畫。", "D) 線上訓練課程。"],
-                ans: 3, // D
-                exp: "線上訓練 (Online training) 最能確保一致性且易於大規模實施。"
-            },
-            {
-                id: 28,
-                q: "培養女性與有色人種擔任管理職是一項良好策略，因為：",
-                options: ["A) 平權行動相關法規顯然會持續大幅增加。", "B) 女性與有色人種在管理職上更能吸引多元的顧客族群。", "C) 訓練這些多元群體的成本較低...", "D) 這些群體在其職涯中較不可能更換雇主。"],
-                ans: 1, // B
-                exp: "多元化的管理層能反映並吸引多元的市場客戶 (Diverse customer base)。"
-            },
-            {
-                id: 29,
-                q: "__________是以既定標準評估員工績效水準，以據以決定升遷、薪酬、追加訓練或解僱的制度。",
-                options: ["A) 職務分析", "B) 績效評估", "C) 背景查核", "D) SWOT 分析"],
-                ans: 1, // B
-                exp: "Performance appraisal 即為績效評估。"
-            },
-            {
-                id: 30,
-                q: "許多公司現在為員工提供__________福利，例如現場理髮與禮賓服務，協助員工在工作與家庭生活之間取得平衡。",
-                options: ["A) 即時型", "B) 情境型", "C) 休息型", "D) 柔性（軟性）"],
-                ans: 3, // D
-                exp: "Soft benefits (柔性福利) 指那些讓生活更便利的福利。"
-            },
-            {
-                id: 31,
-                q: "二戰後消費者需求的大幅增加，標誌著__________的開始。",
-                options: ["A) 生產時代", "B) 推銷時代", "C) 行銷觀念時代", "D) 顧客關係時代"],
-                ans: 2, // C
-                exp: "戰後產能過剩轉為需求導向，開啟了行銷觀念時代 (Marketing concept era)。"
-            },
-            {
-                id: 32,
-                q: "採行__________的企業不僅僅是賣出產品；其目標是盡可能了解顧客，並在長期內以商品與服務滿足他們。",
-                options: ["A) 非營利行銷", "B) 顧客關係管理", "C) 目標管理", "D) 行銷組合"],
-                ans: 1, // B
-                exp: "CRM 著重於長期了解並滿足顧客。"
-            },
-            {
-                id: 33,
-                q: "雖然四個 P 有助於我們記住__________的基本構成，但它們並未呈現整個行銷流程中的所有要素。",
-                options: ["A) 溝通策略", "B) 行銷組合", "C) 產品開發流程", "D) 顧客關係行銷流程"],
-                ans: 1, // B
-                exp: "4P 是行銷組合 (Marketing Mix) 的核心。"
-            },
-            {
-                id: 34,
-                q: "行銷流程的最後一步通常包括：",
-                options: ["A) 將產品與競品做出差異化。", "B) 設定適當價格。", "C) 決定最佳的配銷方式。", "D) 建立與顧客的關係。"],
-                ans: 3, // D
-                exp: "現代行銷強調售後建立持續關係 (Building relationships)。"
-            },
-            {
-                id: 35,
-                q: "成功的行銷研究人員會：",
-                options: ["A) 將重點放在過去的顧客需求...", "B) 盡可能從第一手來源蒐集資訊。", "C) 聆聽現有顧客與其他利害關係人的意見。", "D) 在決策時依賴自身經驗..."],
-                ans: 2, // C
-                exp: "聆聽市場聲音 (Listening) 是研究的關鍵。"
-            },
-            {
-                id: 36,
-                q: "__________是用來辨識影響行銷成功的各種因素之過程。",
-                options: ["A) 環境掃描", "B) 目標行銷", "C) 利基行銷", "D) 區隔分析"],
-                ans: 0, // A
-                exp: "Environmental scanning 是分析外部環境因素的過程。"
-            },
-            {
-                id: 37,
-                q: "哪個術語指的是想為個人消費而購買商品與服務，且具備購買資源的個體？",
-                options: ["A) 次級市場", "B) 企業對企業市場", "C) 第三級市場", "D) 消費者市場"],
-                ans: 3, // D
-                exp: "Consumer market (B2C) 指的是個人消費者。"
-            },
-            {
-                id: 38,
-                q: "決定產品被歸類為消費性產品或工業產品的因素是：",
-                options: ["A) 產品的最終用途。", "B) 購買該商品或服務時的決策流程。", "C) 購買者所代表的身分。", "D) 商品是新貨或二手。"],
-                ans: 0, // A
-                exp: "End use (最終用途) 決定分類：自用為消費品，生產用為工業品。"
-            },
-            {
-                id: 39,
-                q: "採用__________區隔的公司，會根據價值觀、態度或興趣將市場分成各群組。",
-                options: ["A) 人口統計", "B) 利益", "C) 心理變數", "D) 規範"],
-                ans: 2, // C
-                exp: "Psychographic (心理變數) 包含價值觀與生活型態。"
-            },
-            {
-                id: 40,
-                q: "採用__________區隔的公司，會依據年齡或學歷將市場分群。",
-                options: ["A) 利益", "B) 心理變數", "C) 經濟", "D) 人口統計"],
-                ans: 3, // D
-                exp: "Demographic (人口統計) 包含年齡、性別、教育等。"
-            },
-            {
-                id: 41,
-                q: "哪個術語指的是企業所提供、在物理屬性相似或目標市場相近的一組產品？",
-                options: ["A) 產品矩陣", "B) 產品線", "C) 產品組合", "D) 總體產品提供"],
-                ans: 1, // B
-                exp: "Product line 指的是一組相關的產品。"
-            },
-            {
-                id: 42,
-                q: "__________的目的在於創造產品在真實或感知上的差異。",
-                options: ["A) 利基行銷", "B) 產品差異化", "C) 產品混合", "D) 目標行銷"],
-                ans: 1, // B
-                exp: "Product differentiation 旨在創造差異。"
-            },
-            {
-                id: 43,
-                q: "下列何者為產品差異化的一項特徵？",
-                options: ["A) 完全由價格決定。", "B) 可建立在產品的真實差異或消費者感知差異上。", "C) 會限制價格競爭與市場進入。", "D) 總是僅由包裝決定。"],
-                ans: 1, // B
-                exp: "差異化可以是實質功能，也可以是品牌形象（感知）。"
-            },
-            {
-                id: 44,
-                q: "Mindent 是一個新口香糖品牌。公司知道販售地點很重要，因為消費者想以最少努力購買這類產品。Mindent 屬於：",
-                options: ["A) 選購品", "B) 專用品", "C) 便利品", "D) 工業品"],
-                ans: 2, // C
-                exp: "便利品 (Convenience goods) 隨手可得，消費者不願花力氣尋找。"
-            },
-            {
-                id: 45,
-                q: "關於包裝在行銷中的角色，下列何者正確？",
-                options: ["A) 包裝是行銷組合中最不重要的要素。", "B) 包裝能改變並提升一項基本產品。", "C) 包裝不會影響消費者的決策過程。", "D) 包裝是行銷流程中成本最高的要素。"],
-                ans: 1, // B
-                exp: "包裝 (Packaging) 能增加價值、吸引注意並保護產品。"
-            },
-            {
-                id: 46,
-                q: "從買方觀點來看，知名品牌產品的一項好處是：",
-                options: ["A) 品質保證", "B) 有助於促銷活動", "C) 提高重複購買", "D) 區隔產品以便訂更高價格"],
-                ans: 0, // A
-                exp: "對買方而言，品牌代表品質承諾，降低購買風險。"
-            },
-            {
-                id: 47,
-                q: "許多超市販售僅標示內容物名稱的簡樸包裝商品...這些商品屬於：",
-                options: ["A) 自有品牌", "B) 製造商品牌", "C) 無品牌（通用）商品", "D) 通用碼品牌"],
-                ans: 2, // C
-                exp: "Generic goods (無品牌商品) 通常只標示產品名稱。"
-            },
-            {
-                id: 48,
-                q: "__________會將新產品概念呈現給潛在顧客以測試其反應。",
-                options: ["A) 產品分析", "B) 概念測試", "C) 產品篩選", "D) 原型開發"],
-                ans: 1, // B
-                exp: "Concept testing 是開發早期的市場測試。"
-            },
-            {
-                id: 49,
-                q: "產品生命週期的哪個階段具有銷售快速成長、獲利很高且競爭者增加的特徵？",
-                options: ["A) 成長期", "B) 成熟期", "C) 飽和期", "D) 衰退期"],
-                ans: 0, // A
-                exp: "成長期 (Growth) 特徵為銷售與獲利飆升，競爭者開始加入。"
-            },
-            {
-                id: 50,
-                q: "一種以競爭為基礎的定價策略稱為__________，係由一家或多家主導廠商設定整個產業競爭者所遵循的定價做法。",
-                options: ["A) 撇脂定價", "B) 滲透定價", "C) 目標成本法", "D) 價格領導"],
-                ans: 3, // D
-                exp: "Price leadership 指由領導者定價，他人跟隨。"
-            },
-            {
-                id: 51,
-                q: "關於促銷，何者最正確？",
-                options: ["A) 促銷可同時針對內部（員工、通路）與外部（消費者）對象。", "B) 促銷僅針對非營利組織。", "C) 經銷商不適合作為促銷對象。", "D) 促銷的唯一目標是建立消費者認知。"],
-                ans: 0, // A
-                exp: "Sales promotion 對象廣泛，包含 B2B, B2C 及內部員工。"
-            }
-        ];
-
-        // === Functions ===
-
-        function switchTab(tabName) {
-            // Hide all sections
-            document.getElementById('section-keyterms').classList.add('hidden');
-            document.getElementById('section-tf').classList.add('hidden');
-            document.getElementById('section-mcq').classList.add('hidden');
-            
-            // Deactivate all tabs
-            const tabs = ['keyterms', 'tf', 'mcq'];
-            tabs.forEach(t => {
-                const el = document.getElementById(`tab-${t}`);
-                el.classList.remove('tab-active');
-                el.classList.add('tab-inactive');
-            });
-
-            // Show selected section
-            document.getElementById(`section-${tabName}`).classList.remove('hidden');
-            
-            // Activate selected tab
-            const activeTab = document.getElementById(`tab-${tabName}`);
-            activeTab.classList.remove('tab-inactive');
-            activeTab.classList.add('tab-active');
-        }
-
-        function renderKeyTerms() {
-            const container = document.getElementById('keyterms-container');
-            let html = '';
-            
-            keyTermsData.forEach(item => {
-                html += `
-                    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-400">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-800">${item.termEn}</h3>
-                                <h4 class="text-lg text-blue-600 font-medium">${item.termCh}</h4>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <textarea id="input-${item.id}" rows="2" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-200 focus:outline-none" placeholder="試著在這裡輸入你的記憶..."></textarea>
-                        </div>
-
-                        <button onclick="toggleKeyTerm(${item.id})" class="bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200 transition mb-4">
-                            <i class="fa-regular fa-lightbulb mr-1"></i> 顯示/隱藏 解析
-                        </button>
-                        
-                        <div id="answer-${item.id}" class="hidden bg-gray-50 p-4 rounded text-gray-700 space-y-2">
-                            <p class="font-medium">${item.def}</p>
-                            <p class="text-sm italic border-t pt-2 mt-2 border-gray-200">${item.ex}</p>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function toggleKeyTerm(id) {
-            const el = document.getElementById(`answer-${id}`);
-            el.classList.toggle('hidden');
-        }
-
-        function renderTF() {
-            const container = document.getElementById('tf-container');
-            let html = '';
-            
-            tfData.forEach(item => {
-                html += `
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="flex items-start">
-                            <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded mt-1">Q${item.id}</span>
-                            <p class="text-lg text-gray-800 font-medium mb-4">${item.q}</p>
-                        </div>
-                        
-                        <div class="flex space-x-4 mb-4" id="tf-options-${item.id}">
-                            <button onclick="checkTF(${item.id}, true)" class="flex-1 py-2 px-4 border border-gray-300 rounded hover:bg-gray-50 transition text-center">
-                                <i class="fa-solid fa-check text-green-600"></i> True (正確)
-                            </button>
-                            <button onclick="checkTF(${item.id}, false)" class="flex-1 py-2 px-4 border border-gray-300 rounded hover:bg-gray-50 transition text-center">
-                                <i class="fa-solid fa-xmark text-red-600"></i> False (錯誤)
-                            </button>
-                        </div>
-
-                        <div id="tf-result-${item.id}" class="hidden p-4 rounded mt-2">
-                            <p id="tf-msg-${item.id}" class="font-bold mb-1"></p>
-                            <p class="text-gray-700 text-sm"><span class="font-semibold">解析：</span>${item.exp}</p>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function checkTF(id, userChoice) {
-            const question = tfData.find(q => q.id === id);
-            const resultDiv = document.getElementById(`tf-result-${id}`);
-            const msgEl = document.getElementById(`tf-msg-${id}`);
-            const buttons = document.getElementById(`tf-options-${id}`).querySelectorAll('button');
-
-            // Disable buttons after answer
-            buttons.forEach(btn => btn.disabled = true);
-
-            resultDiv.classList.remove('hidden');
-            
-            if (userChoice === question.a) {
-                resultDiv.className = "p-4 rounded mt-2 bg-green-100 border border-green-400 text-green-900";
-                msgEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> 答對了！';
-            } else {
-                resultDiv.className = "p-4 rounded mt-2 bg-red-100 border border-red-400 text-red-900";
-                msgEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> 答錯了。';
+            resetMCQ() {
+                if(confirm('確定要重置所有選擇題嗎？')) {
+                    this.mcqQuestions.forEach(q => q.userAnswer = null);
+                }
             }
         }
+    }).mount('#app')
+</script>
 
-        function renderMCQ() {
-            const container = document.getElementById('mcq-container');
-            let html = '';
-            
-            mcqData.forEach(item => {
-                let optionsHtml = '';
-                item.options.forEach((opt, index) => {
-                    optionsHtml += `
-                        <button onclick="checkMCQ(${item.id}, ${index}, this)" class="w-full text-left p-3 mb-2 border border-gray-300 rounded hover:bg-gray-50 transition">
-                            ${opt}
-                        </button>
-                    `;
-                });
-
-                html += `
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="flex items-start mb-4">
-                            <span class="bg-green-100 text-green-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded mt-1">Q${item.id}</span>
-                            <p class="text-lg text-gray-800 font-medium">${item.q}</p>
-                        </div>
-                        
-                        <div id="mcq-options-${item.id}" class="mb-4">
-                            ${optionsHtml}
-                        </div>
-
-                        <div id="mcq-result-${item.id}" class="hidden p-4 rounded mt-2">
-                            <p id="mcq-msg-${item.id}" class="font-bold mb-1"></p>
-                            <p class="text-gray-700 text-sm"><span class="font-semibold">解析：</span>${item.exp}</p>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function checkMCQ(id, userIndex, btnElement) {
-            const question = mcqData.find(q => q.id === id);
-            const resultDiv = document.getElementById(`mcq-result-${id}`);
-            const msgEl = document.getElementById(`mcq-msg-${id}`);
-            const parent = document.getElementById(`mcq-options-${id}`);
-            const allBtns = parent.querySelectorAll('button');
-
-            // Highlight chosen answer immediately
-            if (userIndex === question.ans) {
-                btnElement.classList.add('correct-answer');
-                resultDiv.className = "p-4 rounded mt-2 bg-green-100 border border-green-400 text-green-900";
-                msgEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> 正確答案！';
-            } else {
-                btnElement.classList.add('wrong-answer');
-                // Highlight the correct one
-                allBtns[question.ans].classList.add('correct-answer');
-                resultDiv.className = "p-4 rounded mt-2 bg-red-100 border border-red-400 text-red-900";
-                msgEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> 很可惜，答錯了。';
-            }
-
-            // Disable all buttons
-            allBtns.forEach(btn => btn.disabled = true);
-            resultDiv.classList.remove('hidden');
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            renderKeyTerms();
-            renderTF();
-            renderMCQ();
-        });
-
-    </script>
 </body>
 </html>
